@@ -1,75 +1,62 @@
 import { useState } from "react";
-import api from "../services/api";
-import { setToken } from "../utils/token";
 import { useNavigate } from "react-router-dom";
+import { authAPI } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 
-const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+export default function Login() {
+  const [form, setForm] = useState({ email: "", password: "" });
   const navigate = useNavigate();
+  const { login } = useAuth(); // 🔥 VERY IMPORTANT
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const res = await api.post("/auth/login", {
-        email,
-        password
-      });
-
-      setToken(res.data.token);
-      navigate("/chat");
-    } catch (err) {
-      setError(err.response?.data?.error || "Login failed");
-    } finally {
-      setLoading(false);
-    }
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    try {
+      const res = await authAPI.login(form);
+  
+      // IMPORTANT
+      login(res.data);
+  
+      if (res.data.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/dashboard");
+      }
+  
+    } catch (err) {
+      alert("Login failed");
+    }
+  };
+  
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-6 rounded-lg shadow-md w-full max-w-md"
-      >
-        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+    <div>
+      <h2>Login</h2>
 
-        {error && (
-          <p className="text-red-500 text-sm mb-3">{error}</p>
-        )}
-
+      <form onSubmit={handleSubmit}>
         <input
-          type="email"
+          name="email"
           placeholder="Email"
-          className="w-full border p-2 rounded mb-3"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={form.email}
+          onChange={handleChange}
           required
         />
 
         <input
+          name="password"
           type="password"
           placeholder="Password"
-          className="w-full border p-2 rounded mb-4"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={form.password}
+          onChange={handleChange}
           required
         />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
+        <button type="submit">Login</button>
       </form>
     </div>
   );
-};
-
-export default Login;
+}

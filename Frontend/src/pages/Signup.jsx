@@ -1,31 +1,32 @@
 import { useState } from "react";
-import api from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { authAPI } from "../services/api";
 
-const Signup = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function Signup() {
+  const navigate = useNavigate();
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const navigate = useNavigate();
 
-  const handleSignup = async (e) => {
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
-      await api.post("/auth/register", {
-        email,
-        password
-      });
-
-      setSuccess("Account created successfully. Please login.");
-      setTimeout(() => navigate("/login"), 1500);
+      await authAPI.register(form);
+      navigate("/login");
     } catch (err) {
-      setError(err.response?.data?.error || "Signup failed");
+      setError(
+        err.response?.data?.error || "Signup failed. Try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -34,57 +35,52 @@ const Signup = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form
-        onSubmit={handleSignup}
-        className="bg-white p-6 rounded-lg shadow-md w-full max-w-md"
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-xl shadow-md w-full max-w-md"
       >
-        <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Sign Up
+        </h2>
 
         {error && (
-          <p className="text-red-500 text-sm mb-3">{error}</p>
-        )}
-
-        {success && (
-          <p className="text-green-600 text-sm mb-3">{success}</p>
+          <p className="text-red-500 text-sm mb-4">{error}</p>
         )}
 
         <input
           type="email"
+          name="email"
           placeholder="Email"
-          className="w-full border p-2 rounded mb-3"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
           required
+          value={form.email}
+          onChange={handleChange}
+          className="w-full mb-4 p-3 border rounded"
         />
 
         <input
           type="password"
+          name="password"
           placeholder="Password"
-          className="w-full border p-2 rounded mb-4"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
           required
+          value={form.password}
+          onChange={handleChange}
+          className="w-full mb-4 p-3 border rounded"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          className="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 transition"
         >
           {loading ? "Creating account..." : "Sign Up"}
         </button>
 
-        <p className="text-sm text-center mt-4">
+        <p className="text-center text-sm mt-4">
           Already have an account?{" "}
-          <span
-            className="text-blue-600 cursor-pointer"
-            onClick={() => navigate("/login")}
-          >
+          <a href="/login" className="text-blue-600">
             Login
-          </span>
+          </a>
         </p>
       </form>
     </div>
   );
-};
-
-export default Signup;
+}
