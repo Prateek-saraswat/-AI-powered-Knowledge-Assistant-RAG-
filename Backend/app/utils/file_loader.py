@@ -10,14 +10,17 @@ def load_text_from_file(file_path: str)-> str :
     print(f"📄 Loading file: {file_path}")
 
     if not os.path.exists(file_path):
-        print("❌ File does not exist")
+        print(" File does not exist")
         raise FileNotFoundError("File not found")
 
-    elif file_path.endswith(".pdf"):
-        return _load_pdf(file_path)    
+    if file_path.endswith(".pdf"):
+        return _load_pdf(file_path)   
+         
+    elif file_path.endswith('.txt'):
+        return _load_txt(file_path)
 
     else:
-        print("❌ Unsupported file format")
+        print(" Unsupported file format")
         raise ValueError("Only PDF and TXT files are supported")
 
 
