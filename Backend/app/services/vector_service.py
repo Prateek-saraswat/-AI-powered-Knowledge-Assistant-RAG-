@@ -2,6 +2,7 @@ import os
 from pinecone import Pinecone, ServerlessSpec
 from app.services.embedding_service import EmbeddingService
 
+
 class VectorService:
     def __init__(self):
         self.embedding_service = EmbeddingService()
@@ -13,7 +14,7 @@ class VectorService:
         self.index_name = os.getenv("PINECONE_INDEX_NAME")
         self.dimension = int(os.getenv("PINECONE_DIMENSION"))
 
-        # Create index if not exists
+        # Create index if it does not exist
         if self.index_name not in self.pc.list_indexes().names():
             self.pc.create_index(
                 name=self.index_name,
@@ -27,24 +28,61 @@ class VectorService:
 
         self.index = self.pc.Index(self.index_name)
 
-    def add_text(self, text, vector_id, metadata=None):
-        embedding = self.embedding_service.embed_text(text)
+    # =========================
+    # ADD VECTOR (USER + DOC)
+    # =========================
+    def add_text(
+        self,
+        text: str,
+        vector_id: str,
+        metadata: dict,
+        user_id: str
+    ):
+        # 🔥 Track embedding token usage
+        embedding = self.embedding_service.embed_text(
+            text,
+            user_id=user_id
+        )
+
+        # 🔐 Ensure metadata consistency for filtering
+        safe_metadata = {
+            **metadata,
+            "userId": str(user_id),
+            "documentId": str(metadata.get("documentId"))
+        }
 
         self.index.upsert(
             vectors=[
                 {
                     "id": vector_id,
                     "values": embedding,
-                    "metadata": metadata or {}
+                    "metadata": safe_metadata
                 }
             ]
         )
 
-    def search(self, query, top_k=3):
-        query_embedding = self.embedding_service.embed_text(query)
+    def search(
+        self,
+        query: str,
+        user_id: str,
+        document_id: str,
+        top_k: int = 12
+    ):
+        # 🔥 Track query embedding usage
+        query_embedding = self.embedding_service.embed_text(
+            query,
+            user_id=user_id
+        )
+
+        # 🔐 Strict isolation filter
+        filter_query = {
+            "userId": str(user_id),
+            "documentId": str(document_id)
+        }
 
         return self.index.query(
             vector=query_embedding,
             top_k=top_k,
-            include_metadata=True
+            include_metadata=True,
+            filter=filter_query
         )

@@ -1,50 +1,57 @@
-import bcrypt
-from datetime import datetime
+import jwt
+from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
+
 import app.extensions as extensions
-from app.utils.jwt_helper import generate_token
+from app.config import Config
 
 
 class AuthService:
-    def __init__(self):
-        if extensions.db is None:
-            raise RuntimeError("MongoDB not initialized")
-
-        self.users = extensions.db.users
-
     def register(self, email: str, password: str):
-        existing_user = self.users.find_one({"email": email})
-        if existing_user:
+        existing = extensions.db.users.find_one({"email": email})
+        if existing:
             raise ValueError("User already exists")
 
-        hashed_password = bcrypt.hashpw(
-            password.encode("utf-8"),
-            bcrypt.gensalt()
-        )
-
-        self.users.insert_one({
+        user = {
             "email": email,
-            "password": hashed_password,
+            "password": generate_password_hash(password),  # ✅ STRING
             "role": "user",
             "createdAt": datetime.utcnow()
-        })
+        }
+
+        extensions.db.users.insert_one(user)
 
         return {"message": "User registered successfully"}
 
     def login(self, email: str, password: str):
-        user = self.users.find_one({"email": email})
+        user = extensions.db.users.find_one({"email": email})
+
         if not user:
-            raise ValueError("Invalid credentials")
+            raise ValueError("Invalid email or password")
 
-        if not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
-            raise ValueError("Invalid credentials")
+        stored_password = user["password"]
 
-        token = generate_token({
+        # Safety check (old users)
+        if isinstance(stored_password, bytes):
+            stored_password = stored_password.decode("utf-8")
+
+        if not check_password_hash(stored_password, password):
+            raise ValueError("Invalid email or password")
+
+        payload = {
             "userId": str(user["_id"]),
             "email": user["email"],
-            "role": user["role"]
-        })
+            "role": user.get("role", "user"),
+            "exp": datetime.utcnow() + timedelta(hours=24)
+        }
+
+        token = jwt.encode(payload, Config.JWT_SECRET, algorithm="HS256")
 
         return {
             "token": token,
-            "email": user["email"]
+            "user": {
+                "userId": str(user["_id"]),
+                "email": user["email"],
+                "role": user.get("role", "user")
+            }
         }

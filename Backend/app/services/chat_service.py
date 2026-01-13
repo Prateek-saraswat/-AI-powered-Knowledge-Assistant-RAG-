@@ -2,6 +2,7 @@ import app.extensions as extensions
 from app.services.embedding_service import EmbeddingService
 from app.services.vector_service import VectorService
 from datetime import datetime
+from bson import ObjectId
 
 
 class ChatService:
@@ -9,65 +10,110 @@ class ChatService:
         self.embedding_service = EmbeddingService()
         self.vector_service = VectorService()
 
-    def ask_question(self, question: str, user_id: str, top_k: int = 5):
+    def ask_question(
+        self,
+        question: str,
+        user_id: str,
+        document_id: str,
+        top_k: int = 5
+    ):
         print("\n🤖 New question received")
 
         if extensions.db is None:
             raise RuntimeError("MongoDB not initialized")
 
-        # 1️⃣ Search similar chunks in Pinecone
+        # 1️⃣ USER + DOCUMENT BASED VECTOR SEARCH
         print("🔍 Searching relevant chunks in Pinecone")
-        results = self.vector_service.search(question, top_k=top_k)
+        results = self.vector_service.search(
+            query=question,
+            user_id=user_id,
+            document_id=document_id,
+            top_k=top_k
+        )
 
         if not results.matches:
-            answer = "No relevant information found."
-            sources = []
+            answer = "No relevant information found for this document."
         else:
             # 2️⃣ Fetch chunk text from MongoDB
             chunk_texts = []
-            sources = []
 
             for match in results.matches:
                 vector_id = match["id"]
 
-                chunk = extensions.db.document_chunks.find_one(
-                    {"vectorId": vector_id},
+                chunk = extensions.db.documents_chunk.find_one(
+                    {
+                        "vectorId": vector_id,
+                        "userId": ObjectId(user_id),
+                        "documentId": ObjectId(document_id)
+                    },
                     {"_id": 0}
                 )
 
                 if chunk:
                     chunk_texts.append(chunk["text"])
-                    sources.append({
-                        "documentId": str(chunk["documentId"]),
-                        "chunkIndex": chunk["chunkIndex"]
-                    })
 
-            # 3️⃣ Build context
-            context = "\n\n".join(chunk_texts)
+            if not chunk_texts:
+                answer = "No relevant information found for this document."
+            else:
+                # 3️⃣ Build context
+                context = "\n\n".join(chunk_texts)
 
-            # 4️⃣ Ask LLM
-            print("🗣️ Asking LLM with retrieved context")
+                # 4️⃣ Ask LLM (TOKEN TRACKED)
+                print("🗣️ Asking LLM with retrieved context")
 
-            prompt = f"""
-You are a helpful AI assistant.
-Answer the question using ONLY the context below.
+                prompt = f"""
+You are a smart, friendly AI assistant like ChatGPT.
 
-Context:
+Follow these rules carefully:
+
+1. If the user's question is related to the provided document context
+   (such as names, skills, experience, projects, explanations, time/space complexity,
+   links, or any detail from the document),
+   then answer STRICTLY using ONLY the document context.
+
+2. If the question is about the document but the answer is NOT present,
+   reply exactly with:
+   "Not found in document"
+
+3. If the question is NOT related to the document,
+   answer normally using your general knowledge.
+   This includes:
+   - General awareness
+   - Mathematics
+   - DSA & algorithms
+   - Programming concepts
+   - Logical reasoning
+
+4. If the user greets or chats casually
+   (e.g. "hi", "hello", "how are you"),
+   reply politely and conversationally.
+
+5. Do NOT make up document-related facts.
+
+6. Keep answers clear, well-structured, and easy to understand.
+   Use bullet points or step-by-step explanations when helpful.
+
+----------------------------------
+Document Context:
 {context}
 
-Question:
+User Question:
 {question}
 
-Answer clearly and concisely.
+Answer:
 """
-            answer = self.embedding_service.generate_answer(prompt)
 
-        # 5️⃣ SAVE CHAT HISTORY (USER-SPECIFIC)
+                answer = self.embedding_service.generate_answer(
+                    prompt,
+                    ObjectId(user_id)   # 🔥 TOKEN USAGE TRACKED
+                )
+
+        # 5️⃣ SAVE CHAT HISTORY (USER + DOCUMENT BASED)
         extensions.db.chat_messages.insert_one({
-            "userId": user_id,
+            "userId": ObjectId(user_id),
+            "documentId": ObjectId(document_id),
             "question": question,
             "answer": answer,
-            "sources": sources,
             "createdAt": datetime.utcnow()
         })
 
@@ -75,6 +121,5 @@ Answer clearly and concisely.
         print("✅ Answer generated")
 
         return {
-            "answer": answer,
-            "sources": sources
+            "answer": answer
         }

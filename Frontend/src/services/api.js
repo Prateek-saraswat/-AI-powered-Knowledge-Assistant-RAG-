@@ -31,6 +31,8 @@ api.interceptors.request.use(
 // api.interceptors.response.use(
 //   (response) => response,
 //   (error) => {
+//     console.error("❌ API Error:", error.response?.data || error.message);
+    
 //     if (error.response && error.response.status === 401) {
 //       localStorage.removeItem("token");
 //       localStorage.removeItem("user");
@@ -62,16 +64,46 @@ export const documentAPI = {
 }; 
 
 export const chatAPI = {
-  ask: (payload) => api.post("/chat/ask", payload),
-  history: (documentId) =>
-    api.get(`/chat/history?documentId=${documentId}`),
+  ask: (payload) => {
+    console.log("📤 Sending chat request:", payload);
+    
+    // Validate payload
+    if (!payload.documentId) {
+      console.error("❌ Missing documentId in payload!");
+      return Promise.reject(new Error("documentId is required"));
+    }
+    
+    return api.post("/chat/ask", payload);
+  },
+  history: (documentId) => {
+    console.log("📤 Fetching chat history for documentId:", documentId);
+    
+    // Validate documentId
+    if (!documentId || documentId === "undefined") {
+      console.error("❌ Invalid documentId:", documentId);
+      return Promise.reject(new Error("Valid documentId is required"));
+    }
+    
+    return api.get(`/chat/history?documentId=${documentId}`);
+  },
 };
 
 /* ================= ADMIN ================= */
 
 export const adminAPI = {
+  // Dashboard stats
+  stats: () => api.get("/admin/stats"),
+  
+  // User management
+  users: () => api.get("/admin/users"),
+  userDocuments: (userId) => api.get(`/admin/users/${userId}/documents`),
+  userQueries: (userId) => api.get(`/admin/users/${userId}/queries`),
+  
+  // Document management
   documents: () => api.get("/admin/documents"),
   toggleDocument: (id) => api.patch(`/admin/documents/${id}/toggle`),
+  
+  // Queries and usage
   queries: () => api.get("/admin/queries"),
   usage: () => api.get("/admin/usage"),
 };

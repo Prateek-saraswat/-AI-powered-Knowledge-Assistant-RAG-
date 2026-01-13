@@ -9,6 +9,7 @@ import UserDashboard from "./pages/user/Dashboard";
 import ChatPage from "./pages/user/ChatPage";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./components/AdminUsers"; // ✅ ADD THIS IMPORT
 import AdminDocuments from "./pages/admin/Documents";
 import AdminQueries from "./pages/admin/Queries";
 import AdminUsage from "./pages/admin/Usage";
@@ -45,6 +46,16 @@ export default function App() {
         element={
           <ProtectedRoute role="admin">
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ✅ ADD THIS NEW ROUTE */}
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute role="admin">
+            <AdminUsers />
           </ProtectedRoute>
         }
       />

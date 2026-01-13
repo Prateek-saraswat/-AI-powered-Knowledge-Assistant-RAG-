@@ -1,43 +1,89 @@
 import requests
 import os
+from datetime import datetime
+from bson import ObjectId
+import app.extensions as extensions
 
 
 class EmbeddingService:
     def __init__(self):
         self.embed_model = os.getenv("OLLAMA_EMBED_MODEL")
-        self.chat_model = os.getenv("OLLAMA_CHAT_MODEL", "llama3")
+        self.chat_model = os.getenv("OLLAMA_CHAT_MODEL")
 
-    def embed_text(self, text: str):
-        response = requests.post(
-            "http://localhost:11434/api/embeddings",
-            json={
-                "model": self.embed_model,
-                "prompt": text
-            }
-        )
-        return response.json()["embedding"]
+        if not self.embed_model or not self.chat_model:
+            raise RuntimeError("OLLAMA models are not configured in environment variables")
 
-    def generate_answer(self, prompt: str):
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={
-                "model": self.chat_model,
-                "prompt": prompt,
-                "stream": False
-            }
-        )
+    # =========================
+    # EMBEDDINGS + TOKEN TRACK
+    # =========================
+    def embed_text(self, text: str, user_id=None):
+        try:
+            response = requests.post(
+                "http://localhost:11434/api/embeddings",
+                json={
+                    "model": self.embed_model,
+                    "prompt": text
+                },
+                timeout=30
+            )
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise RuntimeError(f"Ollama embedding error: {str(e)}")
 
         data = response.json()
 
-        # Handle different Ollama response formats safely
-        if "response" in data:
-            return data["response"]
+        if "embedding" not in data:
+            raise RuntimeError(f"Invalid embedding response: {data}")
 
-        if "message" in data and "content" in data["message"]:
-            return data["message"]["content"]
+        embedding = data["embedding"]
 
-        if "error" in data:
-            raise RuntimeError(data["error"])
+        # ⚠️ Approximate token count (OK for MVP)
+        token_count = len(text.split())
 
-        # Fallback (debug)
-        raise RuntimeError(f"Unexpected Ollama response: {data}")
+        if user_id:
+            extensions.db.usage_logs.insert_one({
+                "userId": ObjectId(user_id),
+                "type": "embedding",
+                "tokens": token_count,
+                "model": self.embed_model,
+                "createdAt": datetime.utcnow()
+            })
+
+        return embedding
+
+    # =========================
+    # GENERATION + TOKEN TRACK
+    # =========================
+    def generate_answer(self, prompt: str, user_id=None):
+        try:
+            response = requests.post(
+                "http://localhost:11434/api/generate",
+                json={
+                    "model": self.chat_model,
+                    "prompt": prompt,
+                    "stream": False
+                },
+                timeout=60
+            )
+            response.raise_for_status()
+        except requests.RequestException as e:
+            raise RuntimeError(f"Ollama generation error: {str(e)}")
+
+        data = response.json()
+
+        answer = data.get("response")
+        if answer is None:
+            raise RuntimeError(f"Invalid generation response: {data}")
+
+        token_count = len(prompt.split()) + len(answer.split())
+
+        if user_id:
+            extensions.db.usage_logs.insert_one({
+                "userId": ObjectId(user_id),
+                "type": "generation",
+                "tokens": token_count,
+                "model": self.chat_model,
+                "createdAt": datetime.utcnow()
+            })
+
+        return answer

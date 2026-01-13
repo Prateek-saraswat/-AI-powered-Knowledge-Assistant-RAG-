@@ -1,31 +1,34 @@
 from flask import Flask
+from flask_cors import CORS
 from app.config import Config
 from app.extensions import init_mongo
-from flask_cors import CORS
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, supports_credentials=True)
+    # 🔥 ENABLE CORS
+    CORS(
+        app,
+        origins=["http://localhost:5173"],
+        supports_credentials=True
+    )
 
-    # Initialize MongoDB
     init_mongo(app)
 
-    # Register document routes
-    from app.routes.documents import documents_bp
-    app.register_blueprint(documents_bp, url_prefix="/documents")
-
-    # Register chat routes
-    from app.routes.chat import chat_bp
-    app.register_blueprint(chat_bp, url_prefix="/chat")
-
-    # 🔐 Register auth routes (THIS WAS MISSING)
+    # Register routes
     from app.routes.auth import auth_bp
+    from app.routes.documents import documents_bp
+    from app.routes.chat import chat_bp
+    from app.routes.admin import admin_bp
+
     app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(documents_bp, url_prefix="/documents")
+    app.register_blueprint(chat_bp, url_prefix="/chat")
+    app.register_blueprint(admin_bp, url_prefix="/admin")
 
     @app.route("/")
-    def health_check():
+    def health():
         return {"status": "Backend running"}, 200
 
     return app
