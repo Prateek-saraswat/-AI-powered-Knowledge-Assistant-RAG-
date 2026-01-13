@@ -1,4 +1,3 @@
-console.log("🔥 api.js LOADED");
 import axios from "axios";
 
 const api = axios.create({
@@ -8,13 +7,11 @@ const api = axios.create({
   },
 });
 
-/**
- * 🔐 Automatically attach JWT token to every request
- */
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
-    console.log("🛰️ Interceptor running, token =", token);
+    console.log(token);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -42,7 +39,6 @@ api.interceptors.request.use(
 //   }
 // );
 
-/* ================= AUTH ================= */
 
 export const authAPI = {
   login: (data) => api.post("/auth/login", data),
@@ -53,7 +49,6 @@ export const authAPI = {
   },
 };
 
-/* ================= USER ================= */
 
 export const documentAPI = {
   list: () => api.get("/documents/list"),
@@ -67,7 +62,6 @@ export const chatAPI = {
   ask: (payload) => {
     console.log("📤 Sending chat request:", payload);
     
-    // Validate payload
     if (!payload.documentId) {
       console.error("❌ Missing documentId in payload!");
       return Promise.reject(new Error("documentId is required"));
@@ -78,7 +72,6 @@ export const chatAPI = {
   history: (documentId) => {
     console.log("📤 Fetching chat history for documentId:", documentId);
     
-    // Validate documentId
     if (!documentId || documentId === "undefined") {
       console.error("❌ Invalid documentId:", documentId);
       return Promise.reject(new Error("Valid documentId is required"));
@@ -88,22 +81,18 @@ export const chatAPI = {
   },
 };
 
-/* ================= ADMIN ================= */
 
 export const adminAPI = {
   // Dashboard stats
   stats: () => api.get("/admin/stats"),
   
-  // User management
   users: () => api.get("/admin/users"),
   userDocuments: (userId) => api.get(`/admin/users/${userId}/documents`),
   userQueries: (userId) => api.get(`/admin/users/${userId}/queries`),
   
-  // Document management
   documents: () => api.get("/admin/documents"),
   toggleDocument: (id) => api.patch(`/admin/documents/${id}/toggle`),
   
-  // Queries and usage
   queries: () => api.get("/admin/queries"),
   usage: () => api.get("/admin/usage"),
 };

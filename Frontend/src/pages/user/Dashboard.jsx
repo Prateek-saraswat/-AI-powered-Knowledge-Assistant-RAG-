@@ -17,7 +17,7 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const res = await documentAPI.list();
-      console.log("📄 Documents received:", res.data.documents);
+      console.log(res.data.documents);
       setDocuments(res.data.documents);
     } catch (err) {
       console.error("Failed to load documents", err);
@@ -44,7 +44,7 @@ export default function Dashboard() {
   };
 
   const handleDocumentClick = (document) => {
-    console.log("📌 Document clicked:", document);
+    console.log(document);
     setSelectedDocument(document);
     loadChatHistory(document.documentId || document.id || document._id);
   };
