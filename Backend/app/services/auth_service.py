@@ -7,14 +7,15 @@ from app.config import Config
 
 
 class AuthService:
-    def register(self, email: str, password: str):
+    def register(self, email: str, password: str , name:str):
         existing = extensions.db.users.find_one({"email": email})
         if existing:
             raise ValueError("User already exists")
 
         user = {
+            "name": name,
             "email": email,
-            "password": generate_password_hash(password),  # ✅ STRING
+            "password": generate_password_hash(password),  
             "role": "user",
             "createdAt": datetime.utcnow()
         }
@@ -31,7 +32,6 @@ class AuthService:
 
         stored_password = user["password"]
 
-        # Safety check (old users)
         if isinstance(stored_password, bytes):
             stored_password = stored_password.decode("utf-8")
 

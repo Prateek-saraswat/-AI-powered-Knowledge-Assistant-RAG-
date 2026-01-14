@@ -66,7 +66,7 @@ export default function ChatMessage({ message, index }) {
         </div>
       </div>
 
-      <style jsx global>{`
+      <style >{`
         /* Dark Theme Prose Styling */
         .prose {
           color: #e2e8f0;

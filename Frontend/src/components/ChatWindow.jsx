@@ -47,7 +47,7 @@ export default function ChatWindow({ messages, onSend }) {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-900/50 backdrop-blur-xl rounded-xl border border-white/5 overflow-hidden relative">
+    <div className=" scale-97 flex flex-col h-full w-full bg-slate-900/50 backdrop-blur-xl rounded-xl border border-white/5 overflow-hidden relative">
       
       {/* Header */}
       <div className="flex-shrink-0 px-6 py-5 border-b border-white/10 bg-slate-900/40 relative">

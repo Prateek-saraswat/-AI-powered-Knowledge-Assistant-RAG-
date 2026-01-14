@@ -13,7 +13,7 @@ def register():
         return jsonify({"error": "Email and password required"}), 400
 
     try:
-        result = auth_service.register(data["email"], data["password"])
+        result = auth_service.register(data["email"], data["password"],data["name"])
         return jsonify(result), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

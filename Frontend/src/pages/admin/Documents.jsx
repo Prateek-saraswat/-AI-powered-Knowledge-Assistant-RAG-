@@ -258,9 +258,13 @@ export default function AdminDocuments() {
                                   </svg>
                                 </div>
                                 <div>
-                                  <p className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors">
-                                    {getDisplayFilename(doc.filename)}
-                                  </p>
+                                <p
+  className="text-sm font-bold text-white group-hover:text-blue-400 transition-colors 
+             truncate max-w-[220px]"
+  title={getDisplayFilename(doc.filename)}
+>
+  {getDisplayFilename(doc.filename)}
+</p>
                                   <p className="text-xs text-slate-500 mt-0.5 font-medium">{formatDate(doc.createdAt)}</p>
                                 </div>
                               </div>
@@ -382,7 +386,7 @@ export default function AdminDocuments() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style >{`
         .custom-scrollbar::-webkit-scrollbar {
           height: 6px;
           width: 6px;

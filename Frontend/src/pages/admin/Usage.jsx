@@ -54,9 +54,9 @@ export default function AdminUsage() {
           <div className="mb-10 animate-fadeIn">
             <h1 className="text-3xl font-extrabold text-white tracking-tight mb-2">Token Analytics</h1>
             <p className="text-sm text-slate-400 font-medium flex items-center space-x-2">
-              <svg className="h-4 w-4 text-amber-500" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+              {/* <svg className="h-4 w-4 text-amber-500" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
                 <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+              </svg> */}
               <span>Monitor API consumption and user quotas</span>
             </p>
           </div>
@@ -233,7 +233,7 @@ export default function AdminUsage() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           height: 6px;
           width: 6px;

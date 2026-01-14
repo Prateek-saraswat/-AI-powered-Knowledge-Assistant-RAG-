@@ -104,7 +104,7 @@ export default function Dashboard() {
     <>
       <Navbar />
 
-      <div className="min-h-screen bg-[#020617] relative overflow-hidden py-4">
+      <div className="min-h-screen bg-[#020617] relative overflow-hidden py-4 scale-100">
         
         <div className="fixed inset-0 w-full h-full pointer-events-none overflow-hidden z-0">
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-indigo-500/10 rounded-2xl mix-blend-screen filter blur-[120px] animate-blob"></div>
@@ -134,7 +134,7 @@ export default function Dashboard() {
       
           
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 scale-97 gap-6 h-full">
             
           <div className="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 ">
               
@@ -154,7 +154,7 @@ export default function Dashboard() {
               </div>
 
               {/* Documents List */}
-              <div className="max-h-[400px] bg-slate-900/50 backdrop-blur-xl rounded-xl shadow-xl border border-white/5 flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-300 hover:border-purple-500/30 animate-slideUp" style={{ animationDelay: "0.4s" }}>
+              <div className="max-h-[400px] scale-97 bg-slate-900/50 backdrop-blur-xl rounded-xl shadow-xl border border-white/5 flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-300 hover:border-purple-500/30 animate-slideUp" style={{ animationDelay: "0.4s" }}>
                 <div className="px-6 py-4 border-b border-white/10 bg-slate-900/30 flex-shrink-0 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 bg-slate-800/50 rounded-xl flex items-center justify-center border border-white/10 shadow-sm">
@@ -256,11 +256,11 @@ export default function Dashboard() {
                 /* Welcome Screen */
                 <div className="bg-slate-900/50 backdrop-blur-xl rounded-xl shadow-2xl border border-white/5 h-full flex flex-col items-center justify-center p-8 text-center animate-fadeIn">
                   <div className="max-w-xl">
-                    <div className="h-24 w-24 bg-linear-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-purple-500/20 border-4 border-slate-800 group hover:scale-110 transition-transform duration-500">
+                    {/* <div className="h-24 w-24 bg-linear-to-br from-indigo-500 via-purple-600 to-pink-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-purple-500/20 border-4 border-slate-800 group hover:scale-110 transition-transform duration-500">
                       <svg className="h-12 w-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
-                    </div>
+                    </div> */}
                     
                     <h3 className="text-3xl font-bold text-white mb-4 tracking-tight">
                       Welcome to <span className="text-transparent bg-clip-text bg-linear-to-r from-indigo-400 to-cyan-400">Document Chat</span>
@@ -308,7 +308,7 @@ export default function Dashboard() {
       </div>
 
       {/* Global Styles */}
-      <style jsx global>{`
+      <style >{`
         .custom-scrollbar {
           scrollbar-width: thin;
           scrollbar-color: rgba(148, 163, 184, 0.3) transparent;

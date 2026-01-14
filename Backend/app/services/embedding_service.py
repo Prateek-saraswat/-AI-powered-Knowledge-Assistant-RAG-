@@ -13,9 +13,7 @@ class EmbeddingService:
         if not self.embed_model or not self.chat_model:
             raise RuntimeError("OLLAMA models are not configured in environment variables")
 
-    # =========================
-    # EMBEDDINGS + TOKEN TRACK
-    # =========================
+   
     def embed_text(self, text: str, user_id=None):
         try:
             response = requests.post(
@@ -37,7 +35,6 @@ class EmbeddingService:
 
         embedding = data["embedding"]
 
-        # ⚠️ Approximate token count (OK for MVP)
         token_count = len(text.split())
 
         if user_id:
@@ -51,9 +48,7 @@ class EmbeddingService:
 
         return embedding
 
-    # =========================
-    # GENERATION + TOKEN TRACK
-    # =========================
+ 
     def generate_answer(self, prompt: str, user_id=None):
         try:
             response = requests.post(

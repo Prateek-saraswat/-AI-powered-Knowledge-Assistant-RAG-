@@ -213,7 +213,7 @@ export default function UploadDocument({ onUploadSuccess }) {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideDown {
           from { opacity: 0; transform: translateY(-8px); }
           to { opacity: 1; transform: translateY(0); }

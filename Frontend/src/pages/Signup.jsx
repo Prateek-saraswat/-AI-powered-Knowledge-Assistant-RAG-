@@ -350,7 +350,7 @@ export default function Signup() {
         <div className="absolute top-0 left-0 w-72 h-72 bg-cyan-600/10 rounded-full blur-3xl"></div>
       </div>
 
-      <style jsx>{`
+      <style>{`
        .autofill-dark:-webkit-autofill,
         .autofill-dark:-webkit-autofill:hover,
         .autofill-dark:-webkit-autofill:focus,

@@ -9,10 +9,6 @@ import app.extensions as extensions
 
 admin_bp = Blueprint("admin", __name__)
 
-
-# =========================
-# HELPER FUNCTIONS
-# =========================
 def admin_only(request):
     return request.user.get("role") == "admin"
 
@@ -40,10 +36,6 @@ def serialize_document(doc):
         'userId': str(doc.get('userId'))
     }
 
-
-# =========================
-# GET ALL USERS (ADMIN)
-# =========================
 @admin_bp.route("/users", methods=["GET"])
 @jwt_required
 def get_all_users():
@@ -51,7 +43,7 @@ def get_all_users():
         return jsonify({"error": "Admin access required"}), 403
 
     try:
-        # Get all users with their document and query counts
+       
         users = list(
             extensions.db.users.aggregate([
                 {
@@ -85,7 +77,7 @@ def get_all_users():
             ])
         )
 
-        # Serialize users
+      
         serialized_users = []
         for user in users:
             serialized_users.append({
@@ -110,10 +102,6 @@ def get_all_users():
         traceback.print_exc()
         return jsonify({"error": "Failed to fetch users"}), 500
 
-
-# =========================
-# GET USER DOCUMENTS (ADMIN)
-# =========================
 @admin_bp.route("/users/<user_id>/documents", methods=["GET"])
 @jwt_required
 def get_user_documents(user_id):
@@ -121,25 +109,21 @@ def get_user_documents(user_id):
         return jsonify({"error": "Admin access required"}), 403
 
     try:
-        # Validate user_id
         if not ObjectId.is_valid(user_id):
             return jsonify({"error": "Invalid user ID"}), 400
 
         user_object_id = ObjectId(user_id)
 
-        # Check if user exists
         user = extensions.db.users.find_one({"_id": user_object_id})
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        # Get user's documents
         documents = list(
             extensions.db.documents.find(
                 {"userId": user_object_id}
             ).sort("createdAt", -1)
         )
 
-        # Serialize documents
         serialized_docs = [serialize_document(doc) for doc in documents]
 
         return jsonify({
@@ -155,10 +139,6 @@ def get_user_documents(user_id):
         traceback.print_exc()
         return jsonify({"error": "Failed to fetch user documents"}), 500
 
-
-# =========================
-# GET USER QUERIES (ADMIN)
-# =========================
 @admin_bp.route("/users/<user_id>/queries", methods=["GET"])
 @jwt_required
 def get_user_queries(user_id):
@@ -166,25 +146,21 @@ def get_user_queries(user_id):
         return jsonify({"error": "Admin access required"}), 403
 
     try:
-        # Validate user_id
         if not ObjectId.is_valid(user_id):
             return jsonify({"error": "Invalid user ID"}), 400
 
         user_object_id = ObjectId(user_id)
 
-        # Check if user exists
         user = extensions.db.users.find_one({"_id": user_object_id})
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        # Get user's queries
         queries = list(
             extensions.db.chat_messages.find(
                 {"userId": user_object_id}
             ).sort("createdAt", -1).limit(100)
         )
 
-        # Serialize queries
         serialized_queries = []
         for query in queries:
             serialized_queries.append({
@@ -208,10 +184,6 @@ def get_user_queries(user_id):
         traceback.print_exc()
         return jsonify({"error": "Failed to fetch user queries"}), 500
 
-
-# =========================
-# GET ALL DOCUMENTS (ADMIN)
-# =========================
 @admin_bp.route("/documents", methods=["GET"])
 @jwt_required
 def get_all_documents():
@@ -247,7 +219,6 @@ def get_all_documents():
             ])
         )
 
-        # Serialize documents
         serialized_docs = []
         for doc in documents:
             serialized_docs.append({
@@ -274,9 +245,7 @@ def get_all_documents():
         return jsonify({"error": "Failed to fetch documents"}), 500
 
 
-# =========================
-# ENABLE / DISABLE DOCUMENT
-# =========================
+
 @admin_bp.route("/documents/<doc_id>/toggle", methods=["PATCH"])
 @jwt_required
 def toggle_document(doc_id):
@@ -306,9 +275,6 @@ def toggle_document(doc_id):
     }), 200
 
 
-# =========================
-# VIEW ALL USER QUERIES
-# =========================
 @admin_bp.route("/queries", methods=["GET"])
 @jwt_required
 def view_queries():
@@ -342,7 +308,6 @@ def view_queries():
             ])
         )
 
-        # Serialize queries
         serialized_queries = []
         for query in queries:
             serialized_queries.append({
@@ -367,9 +332,6 @@ def view_queries():
         return jsonify({"error": "Failed to fetch queries"}), 500
 
 
-# =========================
-# TOKEN / USAGE STATS
-# =========================
 @admin_bp.route("/usage", methods=["GET"])
 @jwt_required
 def usage_stats():
@@ -399,7 +361,6 @@ def usage_stats():
             ])
         )
 
-        # Serialize usage data
         formatted_usage = []
         for u in usage:
             formatted_usage.append({
@@ -420,10 +381,6 @@ def usage_stats():
         traceback.print_exc()
         return jsonify({"error": "Failed to fetch usage stats"}), 500
 
-
-# =========================
-# ADMIN DASHBOARD STATS
-# =========================
 @admin_bp.route("/stats", methods=["GET"])
 @jwt_required
 def dashboard_stats():
@@ -431,26 +388,20 @@ def dashboard_stats():
         return jsonify({"error": "Admin access required"}), 403
 
     try:
-        # Total users
         total_users = extensions.db.users.count_documents({})
         
-        # Total documents
         total_documents = extensions.db.documents.count_documents({})
         
-        # Active documents (enabled)
         active_documents = extensions.db.documents.count_documents({"enabled": True})
         
-        # Total queries
         total_queries = extensions.db.chat_messages.count_documents({})
         
-        # Queries today
         from datetime import datetime, timedelta
         today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         queries_today = extensions.db.chat_messages.count_documents({
             "createdAt": {"$gte": today_start}
         })
         
-        # Total tokens (if usage_logs exists)
         total_tokens_result = list(extensions.db.usage_logs.aggregate([
             {"$group": {"_id": None, "total": {"$sum": "$tokens"}}}
         ]))

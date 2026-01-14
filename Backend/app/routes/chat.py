@@ -9,7 +9,6 @@ chat_bp = Blueprint("chat", __name__)
 chat_service = ChatService()
 
 
-# Helper function to serialize MongoDB documents
 def serialize_message(msg):
     """Convert MongoDB ObjectIds to strings for JSON serialization"""
     return {
@@ -23,9 +22,6 @@ def serialize_message(msg):
     }
 
 
-# ---------------------------
-# ASK QUESTION (USER + DOCUMENT BASED)
-# ---------------------------
 @chat_bp.route("/ask", methods=["POST"])
 @jwt_required
 def ask_question():
@@ -43,13 +39,11 @@ def ask_question():
     document_id = data["documentId"]
     user_id = request.user["userId"]
 
-    # 🔐 Validate documentId
     try:
         document_object_id = ObjectId(document_id)
     except InvalidId:
         return jsonify({"error": "Invalid documentId"}), 400
 
-    # 🔐 Verify document belongs to user & is enabled
     document = extensions.db.documents.find_one({
         "_id": document_object_id,
         "userId": ObjectId(user_id),
@@ -70,13 +64,11 @@ def ask_question():
         return jsonify(result), 200
 
     except Exception as e:
-        print("❌ Chat error:", str(e))
+        print("Chat error:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
-# ---------------------------
-# CHAT HISTORY (PER DOCUMENT)
-# ---------------------------
+
 @chat_bp.route("/history", methods=["GET"])
 @jwt_required
 def chat_history():
@@ -93,7 +85,6 @@ def chat_history():
     except InvalidId:
         return jsonify({"error": "Invalid documentId"}), 400
 
-    # Fetch messages from database
     messages = list(
         extensions.db.chat_messages
         .find(
@@ -102,10 +93,9 @@ def chat_history():
                 "documentId": document_object_id
             }
         )
-        .sort("createdAt", 1)   # chat-style order
+        .sort("createdAt", 1)  
     )
 
-    # ✅ Convert ObjectIds to strings for JSON serialization
     serialized_messages = [serialize_message(msg) for msg in messages]
 
     return jsonify({

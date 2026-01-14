@@ -29,18 +29,15 @@ class DocumentService:
 
         filename = os.path.basename(file_path)
 
-        # 1️⃣ Extract text
         text = load_text_from_file(file_path)
         if not text.strip():
             raise ValueError("Empty document text")
 
-        print(f"📝 Extracted text length: {len(text)} characters")
+        print(f"Extracted text length: {len(text)} characters")
 
-        # 2️⃣ Chunk text
         chunks = chunk_text(text)
-        print(f"✂️ Created {len(chunks)} chunks")
+        print(f"Created {len(chunks)} chunks")
 
-        # 3️⃣ Store document metadata (USER BASED)
         document_data = {
             "userId": ObjectId(user_id),
             "filename": filename,
@@ -54,13 +51,11 @@ class DocumentService:
         document_result = self.documents_collection.insert_one(document_data)
         document_id = document_result.inserted_id
 
-        print(f"📦 Document saved (id={document_id})")
+        print(f"Document saved (id={document_id})")
 
-        # 4️⃣ Process chunks
         for index, chunk_text_data in enumerate(chunks):
             chunk_id = f"{document_id}_{index}"
 
-            # Save chunk metadata in MongoDB
             self.chunks_collection.insert_one({
                 "userId": ObjectId(user_id),
                 "documentId": document_id,
@@ -70,7 +65,6 @@ class DocumentService:
                 "createdAt": datetime.utcnow()
             })
 
-            # 🔥 Save vector in Pinecone (USER + DOCUMENT SAFE)
             self.vector_service.add_text(
                 text=chunk_text_data,
                 vector_id=chunk_id,
@@ -85,7 +79,7 @@ class DocumentService:
             if (index + 1) % 5 == 0 or index == len(chunks) - 1:
                 print(f"✅ Processed {index + 1}/{len(chunks)} chunks")
 
-        print("🎉 Document ingestion completed\n")
+        print("Document ingestion completed\n")
 
         return {
             "documentId": str(document_id),

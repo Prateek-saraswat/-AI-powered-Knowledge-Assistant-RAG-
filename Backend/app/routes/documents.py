@@ -21,13 +21,11 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# ---------------------------
-# UPLOAD DOCUMENT (USER BASED)
-# ---------------------------
+
 @documents_bp.route("/upload", methods=["POST"])
 @jwt_required
 def upload_document():
-    print("\n📤 Upload request received")
+    print("\nUpload request received")
 
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -42,14 +40,13 @@ def upload_document():
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    # 🔐 Prevent filename collisions
     original_filename = secure_filename(file.filename)
     unique_filename = f"{uuid.uuid4()}_{original_filename}"
 
     file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
     file.save(file_path)
 
-    print(f"📁 File saved at {file_path}")
+    print(f"File saved at {file_path}")
 
     user_id = request.user["userId"]
 
@@ -61,13 +58,11 @@ def upload_document():
         return jsonify(result), 201
 
     except Exception as e:
-        print("❌ Upload error:", e)
+        print("Upload error:", e)
         return jsonify({"error": str(e)}), 500
 
 
-# ---------------------------
-# LIST USER DOCUMENTS
-# ---------------------------
+
 @documents_bp.route("/list", methods=["GET"])
 @jwt_required
 def list_documents():
@@ -89,7 +84,6 @@ def list_documents():
         ).sort("createdAt", -1)
     )
 
-    # Convert ObjectId to string
     for doc in documents:
         doc["documentId"] = str(doc.pop("_id"))
 

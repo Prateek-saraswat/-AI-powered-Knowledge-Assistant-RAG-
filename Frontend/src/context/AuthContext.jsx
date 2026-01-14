@@ -7,7 +7,6 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Restore session on refresh
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     const token = localStorage.getItem("token");
@@ -19,14 +18,12 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // ✅ LOGIN (store ONLY user)
   const login = (data) => {
     localStorage.setItem("token", data.token);
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
   };
 
-  // ✅ LOGOUT
   const logout = () => {
     authAPI.logout(); // clears token
     localStorage.removeItem("user");

@@ -17,12 +17,11 @@ class ChatService:
         document_id: str,
         top_k: int = 5
     ):
-        print("\n🤖 New question received")
+        print("\nNew question received")
 
         if extensions.db is None:
             raise RuntimeError("MongoDB not initialized")
 
-        # 1️⃣ USER + DOCUMENT BASED VECTOR SEARCH
         print("🔍 Searching relevant chunks in Pinecone")
         results = self.vector_service.search(
             query=question,
@@ -34,7 +33,6 @@ class ChatService:
         if not results.matches:
             answer = "No relevant information found for this document."
         else:
-            # 2️⃣ Fetch chunk text from MongoDB
             chunk_texts = []
 
             for match in results.matches:
@@ -55,11 +53,9 @@ class ChatService:
             if not chunk_texts:
                 answer = "No relevant information found for this document."
             else:
-                # 3️⃣ Build context
                 context = "\n\n".join(chunk_texts)
 
-                # 4️⃣ Ask LLM (TOKEN TRACKED)
-                print("🗣️ Asking LLM with retrieved context")
+                print("Asking LLM with retrieved context")
 
                 prompt = f"""
 You are a smart, friendly AI assistant like ChatGPT.
@@ -108,7 +104,6 @@ Answer:
                     ObjectId(user_id)   # 🔥 TOKEN USAGE TRACKED
                 )
 
-        # 5️⃣ SAVE CHAT HISTORY (USER + DOCUMENT BASED)
         extensions.db.chat_messages.insert_one({
             "userId": ObjectId(user_id),
             "documentId": ObjectId(document_id),
@@ -117,8 +112,8 @@ Answer:
             "createdAt": datetime.utcnow()
         })
 
-        print("💾 Chat saved to database")
-        print("✅ Answer generated")
+        print("Chat saved to database")
+        print("Answer generated")
 
         return {
             "answer": answer

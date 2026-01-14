@@ -14,7 +14,6 @@ class VectorService:
         self.index_name = os.getenv("PINECONE_INDEX_NAME")
         self.dimension = int(os.getenv("PINECONE_DIMENSION"))
 
-        # Create index if it does not exist
         if self.index_name not in self.pc.list_indexes().names():
             self.pc.create_index(
                 name=self.index_name,
@@ -28,9 +27,6 @@ class VectorService:
 
         self.index = self.pc.Index(self.index_name)
 
-    # =========================
-    # ADD VECTOR (USER + DOC)
-    # =========================
     def add_text(
         self,
         text: str,
@@ -38,13 +34,11 @@ class VectorService:
         metadata: dict,
         user_id: str
     ):
-        # 🔥 Track embedding token usage
         embedding = self.embedding_service.embed_text(
             text,
             user_id=user_id
         )
 
-        # 🔐 Ensure metadata consistency for filtering
         safe_metadata = {
             **metadata,
             "userId": str(user_id),
@@ -68,13 +62,11 @@ class VectorService:
         document_id: str,
         top_k: int = 12
     ):
-        # 🔥 Track query embedding usage
         query_embedding = self.embedding_service.embed_text(
             query,
             user_id=user_id
         )
 
-        # 🔐 Strict isolation filter
         filter_query = {
             "userId": str(user_id),
             "documentId": str(document_id)
