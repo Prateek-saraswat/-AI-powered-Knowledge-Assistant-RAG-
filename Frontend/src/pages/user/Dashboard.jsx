@@ -169,7 +169,7 @@ export default function Dashboard() {
                   </div>
                   {!loading && (
                     <span className="px-2.5 py-1 bg-gradient-to-r from-blue-500 to-cyan-600 text-white text-xs font-bold rounded-lg shadow-sm">
-                      {documents.length}
+                      {documents.filter((doc)=>doc.enabled).length}
                     </span>
                   )}
                 </div>

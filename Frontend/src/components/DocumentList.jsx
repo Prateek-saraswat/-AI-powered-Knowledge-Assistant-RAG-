@@ -45,7 +45,7 @@ export default function DocumentList({ documents, onDocumentClick, selectedDocum
       if (diffHours < 24) return `${diffHours}h ago`;
       if (diffDays < 7) return `${diffDays}d ago`;
       
-      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      return date.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
     } catch (e) {
       return "";
     }
