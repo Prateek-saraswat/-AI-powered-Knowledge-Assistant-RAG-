@@ -17,11 +17,9 @@ import AdminUsage from "./pages/admin/Usage";
 export default function App() {
   return (
     <Routes>
-      {/* ================= PUBLIC ================= */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
 
-      {/* ================= USER ================= */}
       <Route
         path="/dashboard"
         element={
@@ -40,7 +38,6 @@ export default function App() {
         }
       />
 
-      {/* ================= ADMIN ================= */}
       <Route
         path="/admin"
         element={
@@ -50,7 +47,6 @@ export default function App() {
         }
       />
 
-      {/* ✅ ADD THIS NEW ROUTE */}
       <Route
         path="/admin/users"
         element={
@@ -87,7 +83,6 @@ export default function App() {
         }
       />
 
-      {/* ================= FALLBACK ================= */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

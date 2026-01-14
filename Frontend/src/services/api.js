@@ -63,17 +63,17 @@ export const chatAPI = {
     console.log("📤 Sending chat request:", payload);
     
     if (!payload.documentId) {
-      console.error("❌ Missing documentId in payload!");
+      console.error("Missing documentId in payload!");
       return Promise.reject(new Error("documentId is required"));
     }
     
     return api.post("/chat/ask", payload);
   },
   history: (documentId) => {
-    console.log("📤 Fetching chat history for documentId:", documentId);
+    console.log(documentId);
     
     if (!documentId || documentId === "undefined") {
-      console.error("❌ Invalid documentId:", documentId);
+      console.error(documentId);
       return Promise.reject(new Error("Valid documentId is required"));
     }
     
@@ -83,7 +83,6 @@ export const chatAPI = {
 
 
 export const adminAPI = {
-  // Dashboard stats
   stats: () => api.get("/admin/stats"),
   
   users: () => api.get("/admin/users"),
