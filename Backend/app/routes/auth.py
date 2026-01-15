@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth_service import AuthService
+import re
 
 auth_bp = Blueprint("auth", __name__)
 auth_service = AuthService()
@@ -11,6 +12,8 @@ def register():
 
     if not data or "email" not in data or "password" not in data:
         return jsonify({"error": "Email and password required"}), 400
+
+    
 
     try:
         result = auth_service.register(data["email"], data["password"],data["name"])

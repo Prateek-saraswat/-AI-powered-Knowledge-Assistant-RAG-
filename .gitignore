@@ -11,5 +11,8 @@ node_modules/
 __pycache__/
 venv/
 
+__pycache__/
+*.pyc
+
 # Logs
 *.log
