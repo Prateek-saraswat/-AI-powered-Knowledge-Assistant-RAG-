@@ -2,10 +2,17 @@ import os
 
 
 class Config:
-    SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
+    SECRET_KEY = os.getenv("SECRET_KEY")
 
-    JWT_SECRET = os.getenv("JWT_SECRET", "jwt-dev-secret-key")
-    JWT_EXP_HOURS = 24
+    JWT_SECRET = os.getenv("JWT_SECRET")
+
+    if not SECRET_KEY:
+        raise RuntimeError("SECRET_KEY is not set")
+
+    if not JWT_SECRET:
+        raise RuntimeError("JWT_SECRET is not set")
+
+    JWT_EXP_HOURS = int(os.getenv("JWT_EXP_HOURS", 24))
 
 
     MONGO_URI = os.getenv(
@@ -15,5 +22,5 @@ class Config:
 
     VECTOR_DB_PATH = os.getenv("VECTOR_DB_PATH", "vector_store/chroma")
 
-    CHUNK_SIZE = 500
-    CHUNK_OVERLAP = 100
+    CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 500))
+    CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 100))
