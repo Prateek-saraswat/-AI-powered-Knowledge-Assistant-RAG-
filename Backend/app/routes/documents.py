@@ -32,11 +32,29 @@ def upload_document():
 
     file = request.files["file"]
 
+    MAX_FILE_SIZE = 5 * 1024 * 1024
+
+    if request.content_length is not None and request.content_length > MAX_FILE_SIZE:
+        return jsonify({"error": "File size exceeds 5MB limit"}), 400
+    
+
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
 
     if not allowed_file(file.filename):
         return jsonify({"error": "Only PDF and TXT allowed"}), 400
+
+    allowed_mimetypes = {
+    "application/pdf",
+    "text/plain"
+}   
+    if file.mimetype not in allowed_mimetypes:
+        return jsonify({"error": "Invalid file type"}), 400
+
+    file.seek(0, os.SEEK_END)
+    if file.tell() == 0:
+        return jsonify({"error": "Uploaded file is empty"}), 400
+    file.seek(0)
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
