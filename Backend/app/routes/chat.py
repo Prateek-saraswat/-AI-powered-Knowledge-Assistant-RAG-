@@ -36,6 +36,15 @@ def ask_question():
         }), 400
 
     question = data["question"]
+    if not isinstance(question, str) or not question.strip():
+        return jsonify({"error": "Question cannot be empty"}), 400
+
+    if len(question) < 3:
+        return jsonify({"error": "Question is too short"}), 400
+    
+    if len(question) > 500:
+        return jsonify({"error": "Question is too long (max 500 characters)"}), 400
+        
     document_id = data["documentId"]
     user_id = request.user["userId"]
 
