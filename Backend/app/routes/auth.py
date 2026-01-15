@@ -13,10 +13,30 @@ def register():
     if not data or "email" not in data or "password" not in data:
         return jsonify({"error": "Email and password required"}), 400
 
+    email = data.get("email")
+    password = data.get("password")
+    name = data.get("name")
+
+    if not email or not password or not name:
+        return jsonify({"error": "Email, password and name required"}), 400
+
+    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+        return jsonify({"error": "Invalid email format"}), 400  # for email validati
+
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters"}), 400
+
+    if not any(c.isupper() for c in password):
+        return jsonify({"error": "Password must contain an uppercase letter"}), 400
     
+    if not any(c.islower() for c in password):
+        return jsonify({"error": "Password must contain a lowercase letter"}), 400
+    
+    if not any(c.isdigit() for c in password):
+        return jsonify({"error": "Password must contain a number"}), 400
 
     try:
-        result = auth_service.register(data["email"], data["password"],data["name"])
+        result = auth_service.register(email, password, name)
         return jsonify(result), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -26,11 +46,20 @@ def register():
 def login():
     data = request.get_json()
 
-    if not data or "email" not in data or "password" not in data:
+    if not data:
+        return jsonify({"error": "Request body required"}), 400
+
+    email = data.get("email")
+    password = data.get("password")
+
+    if not email or not password:
         return jsonify({"error": "Email and password required"}), 400
 
+    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+        return jsonify({"error": "Invalid email format"}), 400
+
     try:
-        result = auth_service.login(data["email"], data["password"])
+        result = auth_service.login(email,password)
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
