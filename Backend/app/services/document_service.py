@@ -22,7 +22,7 @@ class DocumentService:
         """
         Full document ingestion pipeline (USER-SCOPED)
         """
-        print("\n📄 Starting document ingestion")
+        print("\n Starting document ingestion")
 
         if not os.path.exists(file_path):
             raise FileNotFoundError("Document file does not exist")
@@ -77,7 +77,7 @@ class DocumentService:
             )
 
             if (index + 1) % 5 == 0 or index == len(chunks) - 1:
-                print(f"✅ Processed {index + 1}/{len(chunks)} chunks")
+                print(f"Processed {index + 1}/{len(chunks)} chunks")
 
         print("Document ingestion completed\n")
 

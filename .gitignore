@@ -1,0 +1,15 @@
+# Ignore env files (case-sensitive folders)
+.env
+.env.*
+Backend/.env
+Frontend/.env
+
+# Ignore node modules
+node_modules/
+
+# Python
+__pycache__/
+venv/
+
+# Logs
+*.log

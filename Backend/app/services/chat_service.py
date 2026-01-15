@@ -22,7 +22,7 @@ class ChatService:
         if extensions.db is None:
             raise RuntimeError("MongoDB not initialized")
 
-        print("🔍 Searching relevant chunks in Pinecone")
+        print("Searching relevant chunks in Pinecone")
         results = self.vector_service.search(
             query=question,
             user_id=user_id,
