@@ -9,7 +9,7 @@ def create_app():
 
     CORS(
         app,
-        origins=["http://localhost:5173"],
+        origins=app.config["CORS_ORIGINS"],
         supports_credentials=True
     )
 
