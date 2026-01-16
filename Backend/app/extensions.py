@@ -1,9 +1,15 @@
 from pymongo import MongoClient
 from pymongo.errors import PyMongoError 
 import os
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 mongo_client = None
 db = None
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[]
+)
 
 def init_mongo(app):
     global mongo_client, db

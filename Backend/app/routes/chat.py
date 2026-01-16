@@ -4,6 +4,7 @@ from app.middlewares.auth_middleware import jwt_required
 import app.extensions as extensions
 from bson import ObjectId
 from bson.errors import InvalidId
+from app.extensions import limiter
 
 chat_bp = Blueprint("chat", __name__)
 chat_service = ChatService()
@@ -24,6 +25,7 @@ def serialize_message(msg):
 
 @chat_bp.route("/ask", methods=["POST"])
 @jwt_required()
+@limiter.limit("20 per minute")
 def ask_question():
     data = request.get_json()
 
@@ -80,6 +82,7 @@ def ask_question():
 
 @chat_bp.route("/history", methods=["GET"])
 @jwt_required()
+@limiter.limit("60 per minute")
 def chat_history():
     user_id = request.user["userId"]
     document_id = request.args.get("documentId")

@@ -7,6 +7,7 @@ from bson import ObjectId
 from app.services.document_service import DocumentService
 from app.middlewares.auth_middleware import jwt_required
 import app.extensions as extensions
+from app.extensions import limiter
 
 
 documents_bp = Blueprint("documents", __name__)
@@ -24,6 +25,7 @@ def allowed_file(filename):
 
 @documents_bp.route("/upload", methods=["POST"])
 @jwt_required()
+@limiter.limit("2 per minute")
 def upload_document():
     print("\nUpload request received")
 
@@ -83,6 +85,7 @@ def upload_document():
 
 @documents_bp.route("/list", methods=["GET"])
 @jwt_required()
+@limiter.limit("30 per minute")
 def list_documents():
     user_id = request.user["userId"]
 
