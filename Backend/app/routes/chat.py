@@ -23,7 +23,7 @@ def serialize_message(msg):
 
 
 @chat_bp.route("/ask", methods=["POST"])
-@jwt_required
+@jwt_required()
 def ask_question():
     data = request.get_json()
 
@@ -79,7 +79,7 @@ def ask_question():
 
 
 @chat_bp.route("/history", methods=["GET"])
-@jwt_required
+@jwt_required()
 def chat_history():
     user_id = request.user["userId"]
     document_id = request.args.get("documentId")

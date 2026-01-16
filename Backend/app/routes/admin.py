@@ -9,8 +9,6 @@ import app.extensions as extensions
 
 admin_bp = Blueprint("admin", __name__)
 
-def admin_only(request):
-    return request.user.get("role") == "admin"
 
 
 def serialize_user(user):
@@ -37,10 +35,9 @@ def serialize_document(doc):
     }
 
 @admin_bp.route("/users", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_all_users():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
        
@@ -103,10 +100,9 @@ def get_all_users():
         return jsonify({"error": "Failed to fetch users"}), 500
 
 @admin_bp.route("/users/<user_id>/documents", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_user_documents(user_id):
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         if not ObjectId.is_valid(user_id):
@@ -140,10 +136,9 @@ def get_user_documents(user_id):
         return jsonify({"error": "Failed to fetch user documents"}), 500
 
 @admin_bp.route("/users/<user_id>/queries", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_user_queries(user_id):
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         if not ObjectId.is_valid(user_id):
@@ -185,10 +180,9 @@ def get_user_queries(user_id):
         return jsonify({"error": "Failed to fetch user queries"}), 500
 
 @admin_bp.route("/documents", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_all_documents():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         documents = list(
@@ -247,10 +241,9 @@ def get_all_documents():
 
 
 @admin_bp.route("/documents/<doc_id>/toggle", methods=["PATCH"])
-@jwt_required
+@jwt_required(role="admin")
 def toggle_document(doc_id):
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         document_object_id = ObjectId(doc_id)
@@ -276,10 +269,9 @@ def toggle_document(doc_id):
 
 
 @admin_bp.route("/queries", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def view_queries():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         queries = list(
@@ -333,10 +325,9 @@ def view_queries():
 
 
 @admin_bp.route("/usage", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def usage_stats():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         usage = list(
@@ -382,10 +373,9 @@ def usage_stats():
         return jsonify({"error": "Failed to fetch usage stats"}), 500
 
 @admin_bp.route("/stats", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def dashboard_stats():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         total_users = extensions.db.users.count_documents({})

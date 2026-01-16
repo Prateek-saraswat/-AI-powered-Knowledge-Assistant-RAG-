@@ -23,7 +23,7 @@ def allowed_file(filename):
 
 
 @documents_bp.route("/upload", methods=["POST"])
-@jwt_required
+@jwt_required()
 def upload_document():
     print("\nUpload request received")
 
@@ -82,7 +82,7 @@ def upload_document():
 
 
 @documents_bp.route("/list", methods=["GET"])
-@jwt_required
+@jwt_required()
 def list_documents():
     user_id = request.user["userId"]
 
