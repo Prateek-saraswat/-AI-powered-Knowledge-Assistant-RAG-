@@ -55,19 +55,19 @@ api.interceptors.response.use(
 /**
  * ❌ Auto logout on 401
  */
-// api.interceptors.response.use(
-//   (response) => response,
-//   (error) => {
-//     console.error("❌ API Error:", error.response?.data || error.message);
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error("API Error:", error.response?.data || error.message);
     
-//     if (error.response && error.response.status === 401) {
-//       localStorage.removeItem("token");
-//       localStorage.removeItem("user");
-//       window.location.href = "/login";
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 
 export const authAPI = {
