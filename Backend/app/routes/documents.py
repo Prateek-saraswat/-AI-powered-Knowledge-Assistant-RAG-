@@ -28,6 +28,7 @@ def allowed_file(filename):
 @limiter.limit("2 per minute")
 def upload_document():
     print("\nUpload request received")
+    file_path = None
 
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -79,6 +80,12 @@ def upload_document():
 
     except Exception as e:
         print("Upload error:", e)
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                print(f"Cleaned up failed upload: {file_path}")
+            except Exception as cleanup_error:
+                print("File cleanup failed:", cleanup_error)
         return jsonify({"error": str(e)}), 500
 
 
