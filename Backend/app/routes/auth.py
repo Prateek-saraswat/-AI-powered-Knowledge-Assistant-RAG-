@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from app.services.auth_service import AuthService
 import re
 from app.extensions import limiter
+from app.middlewares.validation_middleware import validate_json
 
 auth_bp = Blueprint("auth", __name__)
 auth_service = AuthService()
@@ -9,18 +10,17 @@ auth_service = AuthService()
 
 @auth_bp.route("/register", methods=["POST"])
 @limiter.limit("5 per minute")
+@validate_json(required_fields=["email", "password", "name"])
 def register():
     data = request.get_json()
 
-    if not data or "email" not in data or "password" not in data:
-        return jsonify({"error": "Email and password required"}), 400
+    
 
     email = data.get("email")
     password = data.get("password")
     name = data.get("name")
 
-    if not email or not password or not name:
-        return jsonify({"error": "Email, password and name required"}), 400
+    
 
     if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
         return jsonify({"error": "Invalid email format"}), 400  # for email validati
@@ -46,17 +46,16 @@ def register():
 
 @auth_bp.route("/login", methods=["POST"])
 @limiter.limit("5 per minute")
+@validate_json(required_fields=["email", "password"])
 def login():
     data = request.get_json()
 
-    if not data:
-        return jsonify({"error": "Request body required"}), 400
+    
 
     email = data.get("email")
     password = data.get("password")
 
-    if not email or not password:
-        return jsonify({"error": "Email and password required"}), 400
+    
 
     if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
         return jsonify({"error": "Invalid email format"}), 400
