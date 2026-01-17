@@ -12,7 +12,7 @@ export default function AdminUsage() {
       try {
         const res = await adminAPI.usage();
         console.log( res.data); 
-        setUsage(res.data.usage || []);
+        setUsage(res.data.data?.usage || []);
       } catch (err) {
         console.error("Failed to load usage:", err);
       } finally {
@@ -179,6 +179,7 @@ export default function AdminUsage() {
                     ) : (
                       sortedUsage.map((u, index) => {
                         const percentage = maxTokens > 0 ? (u.tokens / maxTokens) * 100 : 0;
+                        // console.log(u)
                         return (
                           <tr
                             key={u.userId || index}
@@ -199,7 +200,7 @@ export default function AdminUsage() {
                                 <div className="h-8 w-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-md">
                                   {(u.userEmail || "??").slice(0, 2).toUpperCase()}
                                 </div>
-                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{u.userEmail || "Unknown User"}</span>
+                                <span className="text-sm font-bold text-slate-200 group-hover:text-white transition-colors">{u.userEmail ||u._id|| "Unknown User"}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

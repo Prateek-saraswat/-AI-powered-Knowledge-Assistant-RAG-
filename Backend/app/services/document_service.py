@@ -18,7 +18,7 @@ class DocumentService:
         self.documents_collection = extensions.db.documents
         self.chunks_collection = extensions.db.documents_chunk
 
-    def ingest_document(self, file_path: str, user_id: str):
+    def ingest_document(self, document_id: str, file_path: str, user_id: str):
         """
         Full document ingestion pipeline (USER-SCOPED)
         """
@@ -38,18 +38,10 @@ class DocumentService:
         chunks = chunk_text(text)
         print(f"Created {len(chunks)} chunks")
 
-        document_data = {
-            "userId": ObjectId(user_id),
-            "filename": filename,
-            "filePath": file_path,
-            "totalChunks": len(chunks),
-            "status": "processed",
-            "enabled": True,
-            "createdAt": datetime.utcnow()
-        }
+        doc_object_id = ObjectId(document_id)
+        
 
-        document_result = self.documents_collection.insert_one(document_data)
-        document_id = document_result.inserted_id
+        
 
         print(f"Document saved (id={document_id})")
 
@@ -58,7 +50,7 @@ class DocumentService:
 
             self.chunks_collection.insert_one({
                 "userId": ObjectId(user_id),
-                "documentId": document_id,
+                "documentId": doc_object_id,
                 "chunkIndex": index,
                 "text": chunk_text_data,
                 "vectorId": chunk_id,
@@ -78,6 +70,16 @@ class DocumentService:
 
             if (index + 1) % 5 == 0 or index == len(chunks) - 1:
                 print(f"Processed {index + 1}/{len(chunks)} chunks")
+
+        self.documents_collection.update_one(
+            {"_id": doc_object_id},
+            {
+             "$set": {
+            "status": "processed",
+            "totalChunks": len(chunks)
+            }
+            }
+)        
 
         print("Document ingestion completed\n")
 

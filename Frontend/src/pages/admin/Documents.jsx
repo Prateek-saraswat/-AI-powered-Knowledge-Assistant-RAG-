@@ -25,7 +25,7 @@ export default function AdminDocuments() {
     setLoading(true);
     try {
       const res = await adminAPI.documents();
-      setDocuments(res.data.documents);
+      setDocuments(res.data?.data?.documents || []);
     } catch (err) {
       console.error("Failed to load documents");
     } finally {

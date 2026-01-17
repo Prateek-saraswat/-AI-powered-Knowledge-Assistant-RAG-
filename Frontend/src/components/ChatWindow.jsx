@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import ChatMessage from "./ChatMessage";
 
-export default function ChatWindow({ messages, onSend }) {
+export default function ChatWindow({ messages, onSend , disabled = false,
+  disabledReason = ""}) {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const bottomRef = useRef(null);
@@ -9,6 +10,8 @@ export default function ChatWindow({ messages, onSend }) {
   const messagesEndRef = useRef(null);
 
   const handleSend = () => {
+    if (disabled) return;  
+
     if (!input.trim()) return;
     onSend(input);
     setInput("");
@@ -32,6 +35,7 @@ export default function ChatWindow({ messages, onSend }) {
   }, [messages, isTyping]);
 
   const handleKeyPress = (e) => {
+    if (disabled) return; 
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -66,8 +70,12 @@ export default function ChatWindow({ messages, onSend }) {
                   <span className={`relative inline-flex rounded-full h-2 w-2 ${isTyping ? 'bg-purple-500' : 'bg-emerald-500'}`}></span>
                 </span>
                 <p className="text-sm text-slate-400 font-medium">
-                  {isTyping ? "Thinking..." : "Ready to help"}
-                </p>
+  {disabled
+    ? "Document is processing…"
+    : isTyping
+      ? "Thinking..."
+      : "Ready to help"}
+</p>
               </div>
             </div>
           </div>
@@ -119,8 +127,17 @@ export default function ChatWindow({ messages, onSend }) {
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl opacity-0 group-focus-within:opacity-50 transition duration-500 blur-md"></div>
             <textarea
               ref={textareaRef}
-              placeholder="Type your question here..."
-              value={input}
+              // ref={textareaRef}
+  placeholder={
+    disabled
+      ? disabledReason || "Document is processing…"
+      : "Type your question here..."
+  }
+  value={input}
+  // onChange={handleInput}
+  // onKeyDown={handleKeyPress}
+  disabled={disabled}
+              // value={input}
               onChange={handleInput}
               onKeyDown={handleKeyPress}
               rows={1}
@@ -131,7 +148,7 @@ export default function ChatWindow({ messages, onSend }) {
 
           <button
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={disabled || !input.trim()}
             className="h-14 w-14 bg-gradient-to-br from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center flex-shrink-0 shadow-xl shadow-purple-500/20 hover:shadow-purple-500/30 transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
           >
             <svg className="h-6 w-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">

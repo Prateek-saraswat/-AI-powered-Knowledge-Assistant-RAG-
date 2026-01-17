@@ -7,6 +7,10 @@ from bson import ObjectId
 from app.services.document_service import DocumentService
 from app.middlewares.auth_middleware import jwt_required
 import app.extensions as extensions
+from app.extensions import limiter
+from app.utils.serializer import serialize_dict
+from threading import Thread
+from datetime import datetime
 
 
 documents_bp = Blueprint("documents", __name__)
@@ -23,20 +27,44 @@ def allowed_file(filename):
 
 
 @documents_bp.route("/upload", methods=["POST"])
-@jwt_required
+@jwt_required()
+@limiter.limit("2 per minute")
 def upload_document():
     print("\nUpload request received")
+    file_path = None
 
     if "file" not in request.files:
-        return jsonify({"error": "No file provided"}), 400
+        return jsonify({"message": "No file provided" , "success": False}), 400
 
     file = request.files["file"]
 
+    MAX_FILE_SIZE = 5 * 1024 * 1024
+
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)
+
+    if file_size > MAX_FILE_SIZE:
+        return jsonify({ "success": False, "message": "File size exceeds 5MB limit"}), 413
+    
+
     if file.filename == "":
-        return jsonify({"error": "Empty filename"}), 400
+        return jsonify({ "success" : False ,"message": "Empty filename"}), 400
 
     if not allowed_file(file.filename):
-        return jsonify({"error": "Only PDF and TXT allowed"}), 400
+        return jsonify({ "success" : False , "message": "Only PDF and TXT allowed"}), 400
+
+    allowed_mimetypes = {
+    "application/pdf",
+    "text/plain"
+}   
+    if file.mimetype not in allowed_mimetypes:
+        return jsonify({ "success": False,"message": "Invalid file type"}), 400
+
+    file.seek(0, os.SEEK_END)
+    if file.tell() == 0:
+        return jsonify({ "success": False, "message": "Uploaded file is empty"}), 400
+    file.seek(0)
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -45,31 +73,69 @@ def upload_document():
 
     file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
     file.save(file_path)
+    user_id = request.user["userId"]
+    document = {
+    "userId": ObjectId(user_id),
+    "filename": unique_filename,
+    "originalFilename": original_filename,
+    "path": file_path,
+    "status": "processing",   # 👈 important
+    "enabled": True,
+    "createdAt": datetime.utcnow()
+}
+
+# save document in DB
+    doc_id = extensions.db.documents.insert_one(document).inserted_id
+    Thread(
+    target=document_service.ingest_document,
+    kwargs={
+        "document_id": str(doc_id),
+        "file_path": file_path,
+        "user_id": user_id
+    },
+    daemon=True
+    ).start()
 
     print(f"File saved at {file_path}")
 
-    user_id = request.user["userId"]
+    
 
     try:
-        result = document_service.ingest_document(
-            file_path=file_path,
-            user_id=user_id
-        )
-        return jsonify(result), 201
+       
+        return jsonify({
+    "success": True,
+    "data": {
+        "documentId": str(doc_id),
+        "status": "processing"
+    }
+}), 201
 
     except Exception as e:
         print("Upload error:", e)
-        return jsonify({"error": str(e)}), 500
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                print(f"Cleaned up failed upload: {file_path}")
+            except Exception as cleanup_error:
+                print("File cleanup failed:", cleanup_error)
+        return jsonify({
+            "success": False,
+            "message": str(e)
+            }), 500
 
 
 
 @documents_bp.route("/list", methods=["GET"])
-@jwt_required
+@jwt_required()
+@limiter.limit("30 per minute")
 def list_documents():
     user_id = request.user["userId"]
 
     if extensions.db is None:
-        return jsonify({"error": "DB not initialized"}), 500
+        return jsonify({
+        "success": False,
+        "message": "DB not initialized"
+    }), 500
 
     documents = list(
         extensions.db.documents.find(
@@ -84,10 +150,14 @@ def list_documents():
         ).sort("createdAt", -1)
     )
 
+    documents = [serialize_dict(doc) for doc in documents]
+
     for doc in documents:
-        doc["documentId"] = str(doc.pop("_id"))
+        doc["documentId"] = doc.pop("_id")
 
     return jsonify({
-        "count": len(documents),
-        "documents": documents
-    }), 200
+    "success": True,
+    "data": documents,
+    "documents": documents,   
+    "count": len(documents)
+}), 200

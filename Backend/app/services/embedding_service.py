@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from bson import ObjectId
 import app.extensions as extensions
+from app.config import Config
 
 
 class EmbeddingService:
@@ -17,7 +18,7 @@ class EmbeddingService:
     def embed_text(self, text: str, user_id=None):
         try:
             response = requests.post(
-                "http://localhost:11434/api/embeddings",
+                 f"{Config.OLLAMA_BASE_URL}/api/embeddings",
                 json={
                     "model": self.embed_model,
                     "prompt": text
@@ -52,7 +53,7 @@ class EmbeddingService:
     def generate_answer(self, prompt: str, user_id=None):
         try:
             response = requests.post(
-                "http://localhost:11434/api/generate",
+               f"{Config.OLLAMA_BASE_URL}/api/generate",
                 json={
                     "model": self.chat_model,
                     "prompt": prompt,

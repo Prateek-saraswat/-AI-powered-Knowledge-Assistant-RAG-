@@ -11,7 +11,7 @@ export default function AdminQueries() {
     const loadQueries = async () => {
       try {
         const res = await adminAPI.queries();
-        setQueries(res.data.queries);
+        setQueries(res.data.data?.queries);
       } catch (err) {
         console.error("Failed to load queries");
       } finally {
