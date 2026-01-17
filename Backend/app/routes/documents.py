@@ -9,6 +9,8 @@ from app.middlewares.auth_middleware import jwt_required
 import app.extensions as extensions
 from app.extensions import limiter
 from app.utils.serializer import serialize_dict
+from threading import Thread
+from datetime import datetime
 
 
 documents_bp = Blueprint("documents", __name__)
@@ -71,21 +73,42 @@ def upload_document():
 
     file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
     file.save(file_path)
+    user_id = request.user["userId"]
+    document = {
+    "userId": ObjectId(user_id),
+    "filename": unique_filename,
+    "originalFilename": original_filename,
+    "path": file_path,
+    "status": "processing",   # 👈 important
+    "enabled": True,
+    "createdAt": datetime.utcnow()
+}
+
+# save document in DB
+    doc_id = extensions.db.documents.insert_one(document).inserted_id
+    Thread(
+    target=document_service.ingest_document,
+    kwargs={
+        "document_id": str(doc_id),
+        "file_path": file_path,
+        "user_id": user_id
+    },
+    daemon=True
+    ).start()
 
     print(f"File saved at {file_path}")
 
-    user_id = request.user["userId"]
+    
 
     try:
-        result = document_service.ingest_document(
-            file_path=file_path,
-            user_id=user_id
-        )
+       
         return jsonify({
-         "success": True,
-        "data": result
-        }
-        ), 201
+    "success": True,
+    "data": {
+        "documentId": str(doc_id),
+        "status": "processing"
+    }
+}), 201
 
     except Exception as e:
         print("Upload error:", e)

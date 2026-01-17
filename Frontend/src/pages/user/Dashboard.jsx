@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [messages, setMessages] = useState([]);
   const [loadingChat, setLoadingChat] = useState(false);
   const [hoveredDocId, setHoveredDocId] = useState(null);
+  const canChat = selectedDocument?.status === "processed";
 
   const fetchDocuments = async () => {
     setLoading(true);
@@ -64,6 +65,9 @@ export default function Dashboard() {
 
   const sendQuestion = async (question) => {
     if (!selectedDocument) return;
+    if (selectedDocument.status !== "processed") {
+      return;
+    }
 
     const tempMessage = {
       question,
@@ -222,12 +226,27 @@ export default function Dashboard() {
                           {getDisplayFilename(selectedDocument.filename)}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                          </span>
-                          <span className="text-xs text-emerald-400 font-bold">Ready for analysis</span>
-                        </div>
+  {selectedDocument.status === "processed" ? (
+    <>
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+      </span>
+      <span className="text-xs text-emerald-400 font-bold">
+        Ready for analysis
+      </span>
+    </>
+  ) : (
+    <>
+      <span className="relative flex h-2 w-2">
+        <span className="animate-pulse relative inline-flex rounded-full h-2 w-2 bg-yellow-400"></span>
+      </span>
+      <span className="text-xs text-yellow-400 font-bold">
+        Processing document…
+      </span>
+    </>
+  )}
+</div>
                       </div>
                     </div>
                     <button
@@ -250,7 +269,8 @@ export default function Dashboard() {
                         </div>
                       </div>
                     )}
-                    <ChatWindow messages={messages} onSend={sendQuestion} />
+                    <ChatWindow messages={messages} onSend={sendQuestion} disabled={!canChat}
+  disabledReason="Document is still processing. Please wait." />
                   </div>
                 </div>
               ) : (
