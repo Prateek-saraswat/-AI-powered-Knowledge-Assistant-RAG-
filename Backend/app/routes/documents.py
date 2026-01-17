@@ -38,8 +38,12 @@ def upload_document():
 
     MAX_FILE_SIZE = 5 * 1024 * 1024
 
-    if request.content_length is not None and request.content_length > MAX_FILE_SIZE:
-        return jsonify({"error": "File size exceeds 5MB limit"}), 400
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)
+
+    if file_size > MAX_FILE_SIZE:
+        return jsonify({"error": "File size exceeds 5MB limit"}), 413
     
 
     if file.filename == "":

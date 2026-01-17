@@ -152,6 +152,9 @@ def get_all_documents():
     
 
     try:
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 20))
+        skip = (page - 1) * limit
         documents = list(
             extensions.db.documents.aggregate([
                 {
@@ -176,17 +179,23 @@ def get_all_documents():
                     }
                 },
                 {"$sort": {"createdAt": -1}},
-                {"$limit": 200}
+                {"$skip": skip},
+                {"$limit": limit}
             ])
         )
 
         documents = [serialize_dict(doc) for doc in documents]
+        total_docs = extensions.db.documents.count_documents({})
        
 
         return jsonify({
             "success": True,
             "documents": documents,
-            "count": len(documents)
+            "pagination": {
+        "page": page,
+        "limit": limit,
+        "total": total_docs
+    }
         }), 200
 
     except Exception as e:
@@ -228,7 +237,9 @@ def toggle_document(doc_id):
 @admin_bp.route("/queries", methods=["GET"])
 @jwt_required(role="admin")
 def view_queries():
-    
+    page = int(request.args.get("page", 1))
+    limit = int(request.args.get("limit", 20))
+    skip = (page - 1) * limit
 
     try:
         queries = list(
@@ -253,17 +264,23 @@ def view_queries():
                     }
                 },
                 {"$sort": {"createdAt": -1}},
-                {"$limit": 100}
-            ])
+                {"$skip": skip},
+                {"$limit": limit}
+                ])
         )
 
         queries = [serialize_dict(q) for q in queries]
+        total_queries = extensions.db.chat_messages.count_documents({})
         
 
         return jsonify({
             "success": True,
             "queries": queries,
-            "count": len(queries)
+            "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_queries
+            }
         }), 200
 
     except Exception as e:
