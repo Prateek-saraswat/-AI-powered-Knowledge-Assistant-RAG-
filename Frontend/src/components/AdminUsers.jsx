@@ -192,7 +192,7 @@ export default function AdminUsers() {
                               ? "bg-gradient-to-br from-rose-500 to-red-600" 
                               : "bg-gradient-to-br from-indigo-500 to-blue-600"
                           } ${hoveredUser === user._id ? 'scale-110' : ''}`}>
-                            {user.email.slice(0, 2).toUpperCase()}
+                            {(user.email?.slice(0, 2) || "U").toUpperCase()}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
@@ -232,7 +232,7 @@ export default function AdminUsers() {
                             ? "bg-gradient-to-br from-rose-500 to-pink-600" 
                             : "bg-gradient-to-br from-indigo-500 to-violet-600"
                         }`}>
-                          {selectedUser.email.slice(0, 2).toUpperCase()}
+                          {(selectedUser.email?.slice(0, 2) || "U").toUpperCase()}
                         </div>
                         <div>
                           <h2 className="text-2xl font-bold text-white tracking-tight">{selectedUser.email}</h2>
@@ -380,7 +380,7 @@ export default function AdminUsers() {
                         ) : (
                           userQueries.map((query) => (
                             <div 
-                              key={query.id} 
+                              key={query._id} 
                               className="bg-white/[0.02] rounded-2xl p-5 border border-white/5 hover:border-indigo-500/20 transition-all duration-200 group"
                             >
                               <div className="mb-4">
@@ -404,7 +404,7 @@ export default function AdminUsers() {
                                 <p className="text-[10px] text-slate-500 font-mono flex items-center">
                                   <span>{formatDate(query.createdAt)}</span>
                                   <span className="mx-2">•</span>
-                                  <span>ID: {query.id.slice(0, 8)}</span>
+                                  <span>ID: {(query._id || query.id)?.slice(0, 8)}</span>
                                 </p>
                               </div>
                             </div>

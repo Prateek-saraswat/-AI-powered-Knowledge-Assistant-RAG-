@@ -5,22 +5,12 @@ import app.extensions as extensions
 from bson import ObjectId
 from bson.errors import InvalidId
 from app.extensions import limiter
+from app.utils.serializer import serialize_dict
 
 chat_bp = Blueprint("chat", __name__)
 chat_service = ChatService()
 
 
-def serialize_message(msg):
-    """Convert MongoDB ObjectIds to strings for JSON serialization"""
-    return {
-        'id': str(msg.get('_id')) if msg.get('_id') else None,
-        'userId': str(msg.get('userId')) if msg.get('userId') else None,
-        'documentId': str(msg.get('documentId')) if msg.get('documentId') else None,
-        'question': msg.get('question'),
-        'answer': msg.get('answer'),
-        'createdAt': msg.get('createdAt').isoformat() if msg.get('createdAt') else None,
-        'updatedAt': msg.get('updatedAt').isoformat() if msg.get('updatedAt') else None
-    }
 
 
 @chat_bp.route("/ask", methods=["POST"])
@@ -108,7 +98,7 @@ def chat_history():
         .sort("createdAt", 1)  
     )
 
-    serialized_messages = [serialize_message(msg) for msg in messages]
+    serialized_messages = [serialize_dict(msg) for msg in messages]
 
     return jsonify({
         "success": True,

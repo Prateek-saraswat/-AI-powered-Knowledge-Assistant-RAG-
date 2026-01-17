@@ -6,33 +6,16 @@ from datetime import datetime
 
 from app.middlewares.auth_middleware import jwt_required
 import app.extensions as extensions
+from app.utils.serializer import serialize_dict
 
 admin_bp = Blueprint("admin", __name__)
 
 
 
-def serialize_user(user):
-    """Serialize user object for JSON"""
-    return {
-        '_id': str(user.get('_id')),
-        'email': user.get('email'),
-        'role': user.get('role', 'user'),
-        'createdAt': user.get('createdAt').isoformat() if user.get('createdAt') else None,
-        'lastLogin': user.get('lastLogin').isoformat() if user.get('lastLogin') else None
-    }
 
 
-def serialize_document(doc):
-    """Serialize document object for JSON"""
-    return {
-        '_id': str(doc.get('_id')),
-        'filename': doc.get('filename'),
-        'enabled': doc.get('enabled', True),
-        'status': doc.get('status', 'processed'),
-        'size': doc.get('size'),
-        'createdAt': doc.get('createdAt').isoformat() if doc.get('createdAt') else None,
-        'userId': str(doc.get('userId'))
-    }
+
+
 
 @admin_bp.route("/users", methods=["GET"])
 @jwt_required(role="admin")
@@ -75,22 +58,13 @@ def get_all_users():
         )
 
       
-        serialized_users = []
-        for user in users:
-            serialized_users.append({
-                '_id': str(user.get('_id')),
-                'email': user.get('email'),
-                'role': user.get('role', 'user'),
-                'createdAt': user.get('createdAt').isoformat() if user.get('createdAt') else None,
-                'lastLogin': user.get('lastLogin').isoformat() if user.get('lastLogin') else None,
-                'documentCount': user.get('documentCount', 0),
-                'queryCount': user.get('queryCount', 0)
-            })
+        users = [serialize_dict(user) for user in users]
+        
 
         return jsonify({
             "success": True,
-            "users": serialized_users,
-            "count": len(serialized_users)
+            "users": users,
+            "count": len(users)
         }), 200
 
     except Exception as e:
@@ -120,7 +94,7 @@ def get_user_documents(user_id):
             ).sort("createdAt", -1)
         )
 
-        serialized_docs = [serialize_document(doc) for doc in documents]
+        serialized_docs = [serialize_dict(doc) for doc in documents]
 
         return jsonify({
             "success": True,
@@ -156,15 +130,8 @@ def get_user_queries(user_id):
             ).sort("createdAt", -1).limit(100)
         )
 
-        serialized_queries = []
-        for query in queries:
-            serialized_queries.append({
-                'id': str(query.get('_id')),
-                'documentId': str(query.get('documentId')),
-                'question': query.get('question'),
-                'answer': query.get('answer'),
-                'createdAt': query.get('createdAt').isoformat() if query.get('createdAt') else None
-            })
+        serialized_queries = [serialize_dict(q) for q in queries]
+       
 
         return jsonify({
             "success": True,
@@ -213,23 +180,13 @@ def get_all_documents():
             ])
         )
 
-        serialized_docs = []
-        for doc in documents:
-            serialized_docs.append({
-                '_id': str(doc.get('_id')),
-                'filename': doc.get('filename'),
-                'enabled': doc.get('enabled', True),
-                'status': doc.get('status', 'processed'),
-                'size': doc.get('size'),
-                'createdAt': doc.get('createdAt').isoformat() if doc.get('createdAt') else None,
-                'userEmail': doc.get('userEmail'),
-                'userId': str(doc.get('userId'))
-            })
+        documents = [serialize_dict(doc) for doc in documents]
+       
 
         return jsonify({
             "success": True,
-            "documents": serialized_docs,
-            "count": len(serialized_docs)
+            "documents": documents,
+            "count": len(documents)
         }), 200
 
     except Exception as e:
@@ -300,21 +257,13 @@ def view_queries():
             ])
         )
 
-        serialized_queries = []
-        for query in queries:
-            serialized_queries.append({
-                'id': str(query.get('_id')),
-                'question': query.get('question'),
-                'answer': query.get('answer'),
-                'createdAt': query.get('createdAt').isoformat() if query.get('createdAt') else None,
-                'userEmail': query.get('userEmail'),
-                'userId': str(query.get('userId'))
-            })
+        queries = [serialize_dict(q) for q in queries]
+        
 
         return jsonify({
             "success": True,
-            "queries": serialized_queries,
-            "count": len(serialized_queries)
+            "queries": queries,
+            "count": len(queries)
         }), 200
 
     except Exception as e:
@@ -352,13 +301,8 @@ def usage_stats():
             ])
         )
 
-        formatted_usage = []
-        for u in usage:
-            formatted_usage.append({
-                "userEmail": u["_id"],
-                "userId": str(u.get("userId")),
-                "tokens": u["tokens"]
-            })
+        formatted_usage = [serialize_dict(u) for u in usage]
+        
 
         return jsonify({
             "success": True,

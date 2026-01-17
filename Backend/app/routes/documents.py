@@ -8,6 +8,7 @@ from app.services.document_service import DocumentService
 from app.middlewares.auth_middleware import jwt_required
 import app.extensions as extensions
 from app.extensions import limiter
+from app.utils.serializer import serialize_dict
 
 
 documents_bp = Blueprint("documents", __name__)
@@ -112,8 +113,10 @@ def list_documents():
         ).sort("createdAt", -1)
     )
 
+    documents = [serialize_dict(doc) for doc in documents]
+
     for doc in documents:
-        doc["documentId"] = str(doc.pop("_id"))
+        doc["documentId"] = doc.pop("_id")
 
     return jsonify({
         "count": len(documents),
