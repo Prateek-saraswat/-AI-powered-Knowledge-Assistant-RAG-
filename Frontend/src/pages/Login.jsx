@@ -55,11 +55,15 @@ export default function Login() {
     setIsLoading(true);
     try {
       const res = await authAPI.login(form);
-      login(res.data);
-      navigate(res.data.user.role === "admin" ? "/admin" : "/dashboard");
+      const payload = res.data.data; 
+      login(payload);
+      navigate(payload.user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       setErrors({
-        submit: err.response?.data?.message || "Login failed. Please try again.",
+        submit:
+    err.normalized?.message ||
+    err.response?.data?.message ||
+    "Login failed. Please try again.",
       });
     } finally {
       setIsLoading(false);

@@ -33,7 +33,7 @@ export default function Dashboard() {
     setLoadingChat(true);
     try {
       const res = await chatAPI.history(documentId);
-      setMessages(res.data.messages || []);
+      setMessages(res.data.data?.messages || []);
     } catch (err) {
       console.error("Failed to load chat history", err);
       setMessages([]);
@@ -79,12 +79,13 @@ export default function Dashboard() {
         documentId: docId,
         question,
       });
+      const aiAnswer = res.data.data.answer;
 
       setMessages((prev) => [
         ...prev.slice(0, -1),
         {
           question,
-          answer: res.data.answer,
+          answer: aiAnswer,
           createdAt: new Date().toISOString(),
         },
       ]);

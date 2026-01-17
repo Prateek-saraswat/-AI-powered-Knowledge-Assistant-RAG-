@@ -63,15 +63,20 @@ def get_all_users():
 
         return jsonify({
             "success": True,
-            "users": users,
-            "count": len(users)
+             "data": {
+        "users": users,
+        "count": len(users)
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in get_all_users: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch users"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch users"
+}), 500
 
 @admin_bp.route("/users/<user_id>/documents", methods=["GET"])
 @jwt_required(role="admin")
@@ -80,13 +85,19 @@ def get_user_documents(user_id):
 
     try:
         if not ObjectId.is_valid(user_id):
-            return jsonify({"error": "Invalid user ID"}), 400
+            return jsonify({
+    "success": False,
+    "message": "Invalid user ID"
+}), 400
 
         user_object_id = ObjectId(user_id)
 
         user = extensions.db.users.find_one({"_id": user_object_id})
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return jsonify({
+    "success": False,
+    "message": "User not found"
+}), 404
 
         documents = list(
             extensions.db.documents.find(
@@ -98,16 +109,21 @@ def get_user_documents(user_id):
 
         return jsonify({
             "success": True,
-            "userEmail": user.get('email'),
-            "documents": serialized_docs,
-            "count": len(serialized_docs)
+             "data": {
+        "userEmail": user.get('email'),
+        "documents": serialized_docs,
+        "count": len(serialized_docs)
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in get_user_documents: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch user documents"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch user documents"
+}), 500
 
 @admin_bp.route("/users/<user_id>/queries", methods=["GET"])
 @jwt_required(role="admin")
@@ -135,9 +151,11 @@ def get_user_queries(user_id):
 
         return jsonify({
             "success": True,
-            "userEmail": user.get('email'),
-            "queries": serialized_queries,
-            "count": len(serialized_queries)
+            "data": {
+        "userEmail": user.get('email'),
+        "queries": serialized_queries,
+        "count": len(serialized_queries)
+    }
         }), 200
 
     except Exception as e:
@@ -190,11 +208,13 @@ def get_all_documents():
 
         return jsonify({
             "success": True,
-            "documents": documents,
-            "pagination": {
-        "page": page,
-        "limit": limit,
-        "total": total_docs
+            "data": {
+        "documents": documents,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_docs
+        }
     }
         }), 200
 
@@ -202,7 +222,10 @@ def get_all_documents():
         print(f"Error in get_all_documents: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch documents"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch documents"
+}), 500
 
 
 
@@ -214,11 +237,17 @@ def toggle_document(doc_id):
     try:
         document_object_id = ObjectId(doc_id)
     except InvalidId:
-        return jsonify({"error": "Invalid document ID"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Invalid document ID"
+}), 400
 
     doc = extensions.db.documents.find_one({"_id": document_object_id})
     if not doc:
-        return jsonify({"error": "Document not found"}), 404
+        return jsonify({
+    "success": False,
+    "message": "Document not found"
+}), 404
 
     new_status = not doc.get("enabled", True)
 
@@ -275,19 +304,24 @@ def view_queries():
 
         return jsonify({
             "success": True,
-            "queries": queries,
-            "pagination": {
+             "data": {
+        "queries": queries,
+        "pagination": {
             "page": page,
             "limit": limit,
             "total": total_queries
-            }
+        }
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in view_queries: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch queries"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch queries"
+}), 500
 
 
 @admin_bp.route("/usage", methods=["GET"])
@@ -323,15 +357,20 @@ def usage_stats():
 
         return jsonify({
             "success": True,
-            "usage": formatted_usage,
-            "count": len(formatted_usage)
+            "data": {
+        "usage": formatted_usage,
+        "count": len(formatted_usage)
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in usage_stats: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch usage stats"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch usage stats"
+}), 500
 
 @admin_bp.route("/stats", methods=["GET"])
 @jwt_required(role="admin")
@@ -360,18 +399,23 @@ def dashboard_stats():
 
         return jsonify({
             "success": True,
-            "stats": {
-                "totalUsers": total_users,
-                "totalDocuments": total_documents,
-                "activeDocuments": active_documents,
-                "totalQueries": total_queries,
-                "queriesToday": queries_today,
-                "totalTokens": total_tokens
-            }
+            "data": {
+        "stats": {
+            "totalUsers": total_users,
+            "totalDocuments": total_documents,
+            "activeDocuments": active_documents,
+            "totalQueries": total_queries,
+            "queriesToday": queries_today,
+            "totalTokens": total_tokens
+        }
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in dashboard_stats: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch dashboard stats"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch dashboard stats"
+}), 500

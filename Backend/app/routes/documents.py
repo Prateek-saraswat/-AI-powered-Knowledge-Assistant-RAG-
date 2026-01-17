@@ -32,7 +32,7 @@ def upload_document():
     file_path = None
 
     if "file" not in request.files:
-        return jsonify({"error": "No file provided"}), 400
+        return jsonify({"message": "No file provided" , "success": False}), 400
 
     file = request.files["file"]
 
@@ -43,25 +43,25 @@ def upload_document():
     file.seek(0)
 
     if file_size > MAX_FILE_SIZE:
-        return jsonify({"error": "File size exceeds 5MB limit"}), 413
+        return jsonify({ "success": False, "message": "File size exceeds 5MB limit"}), 413
     
 
     if file.filename == "":
-        return jsonify({"error": "Empty filename"}), 400
+        return jsonify({ "success" : False ,"message": "Empty filename"}), 400
 
     if not allowed_file(file.filename):
-        return jsonify({"error": "Only PDF and TXT allowed"}), 400
+        return jsonify({ "success" : False , "message": "Only PDF and TXT allowed"}), 400
 
     allowed_mimetypes = {
     "application/pdf",
     "text/plain"
 }   
     if file.mimetype not in allowed_mimetypes:
-        return jsonify({"error": "Invalid file type"}), 400
+        return jsonify({ "success": False,"message": "Invalid file type"}), 400
 
     file.seek(0, os.SEEK_END)
     if file.tell() == 0:
-        return jsonify({"error": "Uploaded file is empty"}), 400
+        return jsonify({ "success": False, "message": "Uploaded file is empty"}), 400
     file.seek(0)
 
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -81,7 +81,11 @@ def upload_document():
             file_path=file_path,
             user_id=user_id
         )
-        return jsonify(result), 201
+        return jsonify({
+         "success": True,
+        "data": result
+        }
+        ), 201
 
     except Exception as e:
         print("Upload error:", e)
@@ -91,7 +95,10 @@ def upload_document():
                 print(f"Cleaned up failed upload: {file_path}")
             except Exception as cleanup_error:
                 print("File cleanup failed:", cleanup_error)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "message": str(e)
+            }), 500
 
 
 
@@ -102,7 +109,10 @@ def list_documents():
     user_id = request.user["userId"]
 
     if extensions.db is None:
-        return jsonify({"error": "DB not initialized"}), 500
+        return jsonify({
+        "success": False,
+        "message": "DB not initialized"
+    }), 500
 
     documents = list(
         extensions.db.documents.find(
@@ -123,6 +133,8 @@ def list_documents():
         doc["documentId"] = doc.pop("_id")
 
     return jsonify({
-        "count": len(documents),
-        "documents": documents
-    }), 200
+    "success": True,
+    "data": documents,
+    "documents": documents,   
+    "count": len(documents)
+}), 200

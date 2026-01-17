@@ -31,9 +31,10 @@ export default function AdminUsers() {
     setLoading(true);
     try {
       const res = await adminAPI.users();
-      setUsers(res.data.users);
+      setUsers(res.data?.data?.users || []);
     } catch (err) {
       console.error("Failed to load users:", err);
+      setUsers([]);
     } finally {
       setLoading(false);
     }
@@ -43,7 +44,7 @@ export default function AdminUsers() {
     setLoadingUserData(true);
     try {
       const res = await adminAPI.userDocuments(userId);
-      setUserDocuments(res.data.documents);
+      setUserDocuments(res.data?.data?.documents || []);
     } catch (err) {
       console.error("Failed to load user documents:", err);
       setUserDocuments([]);
@@ -56,7 +57,7 @@ export default function AdminUsers() {
     setLoadingUserData(true);
     try {
       const res = await adminAPI.userQueries(userId);
-      setUserQueries(res.data.queries);
+      setUserQueries(res.data?.data?.queries || []);
     } catch (err) {
       console.error("Failed to load user queries:", err);
       setUserQueries([]);
@@ -87,9 +88,11 @@ export default function AdminUsers() {
     loadUsers();
   }, []);
 
-  const filteredUsers = users.filter((user) =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = Array.isArray(users)
+  ? users.filter((user) =>
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  : [];
 
   const formatDate = (dateString) => {
     if (!dateString) return "Never";

@@ -20,22 +20,35 @@ def ask_question():
     data = request.get_json()
 
     if not data:
-        return jsonify({"error": "Request body required"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Request body required"
+}), 400
 
     if "question" not in data or "documentId" not in data:
         return jsonify({
-            "error": "Both question and documentId are required"
-        }), 400
+    "success": False,
+    "message": "Both question and documentId are required"
+}), 400
 
     question = data["question"]
     if not isinstance(question, str) or not question.strip():
-        return jsonify({"error": "Question cannot be empty"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Question cannot be empty"
+}), 400
 
     if len(question) < 3:
-        return jsonify({"error": "Question is too short"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Question is too short"
+}), 400
     
     if len(question) > 500:
-        return jsonify({"error": "Question is too long (max 500 characters)"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Question is too long (max 500 characters)"
+}), 400
         
     document_id = data["documentId"]
     user_id = request.user["userId"]
@@ -43,7 +56,10 @@ def ask_question():
     try:
         document_object_id = ObjectId(document_id)
     except InvalidId:
-        return jsonify({"error": "Invalid documentId"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Invalid documentId"
+}), 400
 
     document = extensions.db.documents.find_one({
         "_id": document_object_id,
@@ -53,8 +69,9 @@ def ask_question():
 
     if not document:
         return jsonify({
-            "error": "Document not found or access denied"
-        }), 404
+    "success": False,
+    "message": "Document not found or access denied"
+}), 404
 
     try:
         result = chat_service.ask_question(
@@ -62,11 +79,17 @@ def ask_question():
             user_id=user_id,
             document_id=document_id
         )
-        return jsonify(result), 200
+        return jsonify({
+    "success": True,
+    "data": result
+}), 200
 
     except Exception as e:
         print("Chat error:", str(e))
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+    "success": False,
+    "message": str(e)
+}), 500
 
 
 
@@ -79,13 +102,17 @@ def chat_history():
 
     if not document_id:
         return jsonify({
-            "error": "documentId query param is required"
-        }), 400
+        "success": False,
+        "message": "documentId query param is required"
+    }), 400
 
     try:
         document_object_id = ObjectId(document_id)
     except InvalidId:
-        return jsonify({"error": "Invalid documentId"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Invalid documentId"
+}), 400
 
     messages = list(
         extensions.db.chat_messages
@@ -102,6 +129,9 @@ def chat_history():
 
     return jsonify({
         "success": True,
+         "data": {
+        "messages": serialized_messages
+    },
         "count": len(serialized_messages),
         "messages": serialized_messages
     }), 200
