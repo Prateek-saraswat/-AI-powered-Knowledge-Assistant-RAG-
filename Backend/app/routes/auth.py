@@ -1,36 +1,97 @@
 from flask import Blueprint, request, jsonify
 from app.services.auth_service import AuthService
 import re
+from app.extensions import limiter
+from app.middlewares.validation_middleware import validate_json
 
 auth_bp = Blueprint("auth", __name__)
 auth_service = AuthService()
 
 
 @auth_bp.route("/register", methods=["POST"])
+@limiter.limit("5 per minute")
+@validate_json(required_fields=["email", "password", "name"])
 def register():
     data = request.get_json()
 
-    if not data or "email" not in data or "password" not in data:
-        return jsonify({"error": "Email and password required"}), 400
+    
+
+    email = data.get("email")
+    password = data.get("password")
+    name = data.get("name")
 
     
 
+    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+        return jsonify({
+    "success": False,
+    "message": "Invalid email format"
+}), 400  # for email validati
+
+    if len(password) < 8:
+        return jsonify({
+    "success": False,
+    "message": "Password must be at least 8 characters"
+}), 400
+
+    if not any(c.isupper() for c in password):
+        return jsonify({
+    "success": False,
+    "message": "Password must contain an uppercase letter"
+}), 400
+    
+    if not any(c.islower() for c in password):
+        return jsonify({
+    "success": False,
+    "message": "Password must contain an lowercase letter"
+}), 400
+    
+    if not any(c.isdigit() for c in password):
+        return jsonify( {
+    "success": False,
+    "message": "Password must contain a number"
+}), 400
+
     try:
-        result = auth_service.register(data["email"], data["password"],data["name"])
-        return jsonify(result), 201
+        result = auth_service.register(email, password, name)
+        return jsonify({
+    "success": True,
+    "data": result
+}), 201
     except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({
+        "success": False,
+        "message": str(e)
+    }), 400
 
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
+@validate_json(required_fields=["email", "password"])
 def login():
     data = request.get_json()
 
-    if not data or "email" not in data or "password" not in data:
-        return jsonify({"error": "Email and password required"}), 400
+    
+
+    email = data.get("email")
+    password = data.get("password")
+
+    
+
+    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+        return jsonify({
+    "success": False,
+    "message": "Invalid email format"
+}), 400
 
     try:
-        result = auth_service.login(data["email"], data["password"])
-        return jsonify(result), 200
+        result = auth_service.login(email,password)
+        return jsonify({
+    "success": True,
+    "data": result
+}), 200
     except ValueError as e:
-        return jsonify({"error": str(e)}), 401
+        return jsonify({
+        "success": False,
+        "message": str(e)
+    }), 401

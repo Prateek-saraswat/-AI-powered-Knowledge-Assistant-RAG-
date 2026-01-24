@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
 from app.config import Config
-from app.extensions import init_mongo
+from app.extensions import init_mongo , limiter
 
 def create_app():
     app = Flask(__name__)
@@ -9,11 +9,12 @@ def create_app():
 
     CORS(
         app,
-        origins=["http://localhost:5173"],
+        origins=app.config["CORS_ORIGINS"],
         supports_credentials=True
     )
 
     init_mongo(app)
+    limiter.init_app(app)
 
     # Register routes
     from app.routes.auth import auth_bp

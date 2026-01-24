@@ -54,7 +54,7 @@ export default function DocumentList({ documents, onDocumentClick, selectedDocum
   return (
     <div className="space-y-2 pb-1 h-full">
       <div className="h-full overflow-y-auto pr-1 custom-scrollbar">
-        {documents.filter((doc) => doc.enabled !== false).map((doc) => {
+        {(documents || []).filter((doc) => doc.enabled !== false).map((doc) => {
           const isSelected = selectedDocument?.documentId === doc.documentId;
           const displayName = getDisplayFilename(doc.filename);
           const isHovered = hoveredDocId === doc.documentId;

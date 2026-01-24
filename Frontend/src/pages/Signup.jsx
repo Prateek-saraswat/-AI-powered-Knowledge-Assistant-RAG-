@@ -77,7 +77,10 @@ export default function Signup() {
       navigate("/login");
     } catch (err) {
       setErrors({
-        submit: err.response?.data?.error || "Signup failed. Please try again.",
+        submit:
+        err.response?.data?.message ||
+        err.normalized?.message ||
+        "Signup failed. Please try again.",
       });
     } finally {
       setIsLoading(false);

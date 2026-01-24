@@ -6,41 +6,21 @@ from datetime import datetime
 
 from app.middlewares.auth_middleware import jwt_required
 import app.extensions as extensions
+from app.utils.serializer import serialize_dict
 
 admin_bp = Blueprint("admin", __name__)
 
-def admin_only(request):
-    return request.user.get("role") == "admin"
 
 
-def serialize_user(user):
-    """Serialize user object for JSON"""
-    return {
-        '_id': str(user.get('_id')),
-        'email': user.get('email'),
-        'role': user.get('role', 'user'),
-        'createdAt': user.get('createdAt').isoformat() if user.get('createdAt') else None,
-        'lastLogin': user.get('lastLogin').isoformat() if user.get('lastLogin') else None
-    }
 
 
-def serialize_document(doc):
-    """Serialize document object for JSON"""
-    return {
-        '_id': str(doc.get('_id')),
-        'filename': doc.get('filename'),
-        'enabled': doc.get('enabled', True),
-        'status': doc.get('status', 'processed'),
-        'size': doc.get('size'),
-        'createdAt': doc.get('createdAt').isoformat() if doc.get('createdAt') else None,
-        'userId': str(doc.get('userId'))
-    }
+
+
 
 @admin_bp.route("/users", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_all_users():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
        
@@ -78,45 +58,46 @@ def get_all_users():
         )
 
       
-        serialized_users = []
-        for user in users:
-            serialized_users.append({
-                '_id': str(user.get('_id')),
-                'email': user.get('email'),
-                'role': user.get('role', 'user'),
-                'createdAt': user.get('createdAt').isoformat() if user.get('createdAt') else None,
-                'lastLogin': user.get('lastLogin').isoformat() if user.get('lastLogin') else None,
-                'documentCount': user.get('documentCount', 0),
-                'queryCount': user.get('queryCount', 0)
-            })
+        users = [serialize_dict(user) for user in users]
+        
 
         return jsonify({
             "success": True,
-            "users": serialized_users,
-            "count": len(serialized_users)
+             "data": {
+        "users": users,
+        "count": len(users)
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in get_all_users: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch users"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch users"
+}), 500
 
 @admin_bp.route("/users/<user_id>/documents", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_user_documents(user_id):
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         if not ObjectId.is_valid(user_id):
-            return jsonify({"error": "Invalid user ID"}), 400
+            return jsonify({
+    "success": False,
+    "message": "Invalid user ID"
+}), 400
 
         user_object_id = ObjectId(user_id)
 
         user = extensions.db.users.find_one({"_id": user_object_id})
         if not user:
-            return jsonify({"error": "User not found"}), 404
+            return jsonify({
+    "success": False,
+    "message": "User not found"
+}), 404
 
         documents = list(
             extensions.db.documents.find(
@@ -124,26 +105,30 @@ def get_user_documents(user_id):
             ).sort("createdAt", -1)
         )
 
-        serialized_docs = [serialize_document(doc) for doc in documents]
+        serialized_docs = [serialize_dict(doc) for doc in documents]
 
         return jsonify({
             "success": True,
-            "userEmail": user.get('email'),
-            "documents": serialized_docs,
-            "count": len(serialized_docs)
+             "data": {
+        "userEmail": user.get('email'),
+        "documents": serialized_docs,
+        "count": len(serialized_docs)
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in get_user_documents: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch user documents"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch user documents"
+}), 500
 
 @admin_bp.route("/users/<user_id>/queries", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_user_queries(user_id):
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         if not ObjectId.is_valid(user_id):
@@ -161,21 +146,16 @@ def get_user_queries(user_id):
             ).sort("createdAt", -1).limit(100)
         )
 
-        serialized_queries = []
-        for query in queries:
-            serialized_queries.append({
-                'id': str(query.get('_id')),
-                'documentId': str(query.get('documentId')),
-                'question': query.get('question'),
-                'answer': query.get('answer'),
-                'createdAt': query.get('createdAt').isoformat() if query.get('createdAt') else None
-            })
+        serialized_queries = [serialize_dict(q) for q in queries]
+       
 
         return jsonify({
             "success": True,
-            "userEmail": user.get('email'),
-            "queries": serialized_queries,
-            "count": len(serialized_queries)
+            "data": {
+        "userEmail": user.get('email'),
+        "queries": serialized_queries,
+        "count": len(serialized_queries)
+    }
         }), 200
 
     except Exception as e:
@@ -185,12 +165,14 @@ def get_user_queries(user_id):
         return jsonify({"error": "Failed to fetch user queries"}), 500
 
 @admin_bp.route("/documents", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def get_all_documents():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
+        page = int(request.args.get("page", 1))
+        limit = int(request.args.get("limit", 20))
+        skip = (page - 1) * limit
         documents = list(
             extensions.db.documents.aggregate([
                 {
@@ -215,51 +197,57 @@ def get_all_documents():
                     }
                 },
                 {"$sort": {"createdAt": -1}},
-                {"$limit": 200}
+                {"$skip": skip},
+                {"$limit": limit}
             ])
         )
 
-        serialized_docs = []
-        for doc in documents:
-            serialized_docs.append({
-                '_id': str(doc.get('_id')),
-                'filename': doc.get('filename'),
-                'enabled': doc.get('enabled', True),
-                'status': doc.get('status', 'processed'),
-                'size': doc.get('size'),
-                'createdAt': doc.get('createdAt').isoformat() if doc.get('createdAt') else None,
-                'userEmail': doc.get('userEmail'),
-                'userId': str(doc.get('userId'))
-            })
+        documents = [serialize_dict(doc) for doc in documents]
+        total_docs = extensions.db.documents.count_documents({})
+       
 
         return jsonify({
             "success": True,
-            "documents": serialized_docs,
-            "count": len(serialized_docs)
+            "data": {
+        "documents": documents,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_docs
+        }
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in get_all_documents: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch documents"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch documents"
+}), 500
 
 
 
 @admin_bp.route("/documents/<doc_id>/toggle", methods=["PATCH"])
-@jwt_required
+@jwt_required(role="admin")
 def toggle_document(doc_id):
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         document_object_id = ObjectId(doc_id)
     except InvalidId:
-        return jsonify({"error": "Invalid document ID"}), 400
+        return jsonify({
+    "success": False,
+    "message": "Invalid document ID"
+}), 400
 
     doc = extensions.db.documents.find_one({"_id": document_object_id})
     if not doc:
-        return jsonify({"error": "Document not found"}), 404
+        return jsonify({
+    "success": False,
+    "message": "Document not found"
+}), 404
 
     new_status = not doc.get("enabled", True)
 
@@ -276,10 +264,11 @@ def toggle_document(doc_id):
 
 
 @admin_bp.route("/queries", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def view_queries():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    page = int(request.args.get("page", 1))
+    limit = int(request.args.get("limit", 20))
+    skip = (page - 1) * limit
 
     try:
         queries = list(
@@ -304,39 +293,41 @@ def view_queries():
                     }
                 },
                 {"$sort": {"createdAt": -1}},
-                {"$limit": 100}
-            ])
+                {"$skip": skip},
+                {"$limit": limit}
+                ])
         )
 
-        serialized_queries = []
-        for query in queries:
-            serialized_queries.append({
-                'id': str(query.get('_id')),
-                'question': query.get('question'),
-                'answer': query.get('answer'),
-                'createdAt': query.get('createdAt').isoformat() if query.get('createdAt') else None,
-                'userEmail': query.get('userEmail'),
-                'userId': str(query.get('userId'))
-            })
+        queries = [serialize_dict(q) for q in queries]
+        total_queries = extensions.db.chat_messages.count_documents({})
+        
 
         return jsonify({
             "success": True,
-            "queries": serialized_queries,
-            "count": len(serialized_queries)
+             "data": {
+        "queries": queries,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total_queries
+        }
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in view_queries: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch queries"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch queries"
+}), 500
 
 
 @admin_bp.route("/usage", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def usage_stats():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         usage = list(
@@ -361,31 +352,30 @@ def usage_stats():
             ])
         )
 
-        formatted_usage = []
-        for u in usage:
-            formatted_usage.append({
-                "userEmail": u["_id"],
-                "userId": str(u.get("userId")),
-                "tokens": u["tokens"]
-            })
+        formatted_usage = [serialize_dict(u) for u in usage]
+        
 
         return jsonify({
             "success": True,
-            "usage": formatted_usage,
-            "count": len(formatted_usage)
+            "data": {
+        "usage": formatted_usage,
+        "count": len(formatted_usage)
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in usage_stats: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch usage stats"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch usage stats"
+}), 500
 
 @admin_bp.route("/stats", methods=["GET"])
-@jwt_required
+@jwt_required(role="admin")
 def dashboard_stats():
-    if not admin_only(request):
-        return jsonify({"error": "Admin access required"}), 403
+    
 
     try:
         total_users = extensions.db.users.count_documents({})
@@ -409,18 +399,23 @@ def dashboard_stats():
 
         return jsonify({
             "success": True,
-            "stats": {
-                "totalUsers": total_users,
-                "totalDocuments": total_documents,
-                "activeDocuments": active_documents,
-                "totalQueries": total_queries,
-                "queriesToday": queries_today,
-                "totalTokens": total_tokens
-            }
+            "data": {
+        "stats": {
+            "totalUsers": total_users,
+            "totalDocuments": total_documents,
+            "activeDocuments": active_documents,
+            "totalQueries": total_queries,
+            "queriesToday": queries_today,
+            "totalTokens": total_tokens
+        }
+    }
         }), 200
 
     except Exception as e:
         print(f"Error in dashboard_stats: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({"error": "Failed to fetch dashboard stats"}), 500
+        return jsonify({
+    "success": False,
+    "message": "Failed to fetch dashboard stats"
+}), 500

@@ -18,7 +18,14 @@ export default function AdminDashboard() {
     const loadStats = async () => {
       try {
         const res = await adminAPI.stats();
-        setStats(res.data.stats);
+        setStats(res.data?.data?.stats || {
+          totalUsers: 0,
+          totalDocuments: 0,
+          activeDocuments: 0,
+          totalQueries: 0,
+          queriesToday: 0,
+          totalTokens: 0,
+        });
       } catch (err) {
         console.error("Failed to load stats:", err);
       } finally {

@@ -31,7 +31,8 @@ export default function UploadDocument({ onUploadSuccess }) {
       onUploadSuccess && onUploadSuccess();
     } catch (err) {
       console.error("Upload failed:", err);
-      setError(err.response?.data?.error || "Upload failed. Please try again.");
+      setError(err.response?.data?.message ||
+        "Upload failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -46,7 +47,7 @@ export default function UploadDocument({ onUploadSuccess }) {
       setError("Only PDF and TXT files are allowed");
       return;
     }
-    const maxSize = 10 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
     if (selectedFile.size > maxSize) {
       setError("File size must be less than 10MB");
       return;
@@ -137,7 +138,7 @@ export default function UploadDocument({ onUploadSuccess }) {
             </p>
             
             <p className="text-xs text-slate-400 mb-3">
-              <span className="font-medium text-slate-300">PDF, TXT</span> (Max 10MB)
+              <span className="font-medium text-slate-300">PDF, TXT</span> (Max 5MB)
             </p>
 
             <input ref={fileInputRef} type="file" accept=".pdf,.txt" onChange={handleFileInputChange} className="hidden" id="file-upload" />
