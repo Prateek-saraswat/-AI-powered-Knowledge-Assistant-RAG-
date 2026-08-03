@@ -1,0 +1,112 @@
+name: UI-Automation-Staging
+on:
+  schedule:
+    - cron: '0 3 * * *'   # nightly, 3:00 AM UTC — adjust to your preferred time
+  workflow_dispatch:
+    inputs:
+      test_marker:
+        description: 'pytest marker to run (smoke | underwriter | self_inspection)'
+        required: false
+        default: 'smoke'
+        type: string
+
+jobs:
+ Run-Tests:
+  runs-on: ubuntu-latest
+  strategy:
+    fail-fast: false
+    matrix:
+      module: [underwriter, self_inspection]
+  steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+          with:
+            ref: staging
+
+        - name: Setup Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+
+        - name: Install dependencies
+          working-directory: UI_automation
+          run: |
+            pip install -r requirements.txt
+            playwright install --with-deps chromium
+
+        ######## Run the suite for this module against staging ########
+        - name: Run pytest (${{ matrix.module }})
+          id: pytest
+          working-directory: UI_automation
+          continue-on-error: true
+          env:
+            HEADLESS: "true"
+            UNDERWRITER_BASE_URL: ${{ secrets.UNDERWRITER_BASE_URL }}
+            UNDERWRITER_LOGIN_PATH: ${{ secrets.UNDERWRITER_LOGIN_PATH }}
+            UNDERWRITER_EMAIL: ${{ secrets.UNDERWRITER_EMAIL }}
+            UNDERWRITER_PASSWORD: ${{ secrets.UNDERWRITER_PASSWORD }}
+            MANAGED_USER_EMAIL: ${{ secrets.MANAGED_USER_EMAIL }}
+            SELF_INSPECTION_BASE_URL: ${{ secrets.SELF_INSPECTION_BASE_URL }}
+            SELF_INSPECTION_PROPERTY_ID: ${{ secrets.SELF_INSPECTION_PROPERTY_ID }}
+            STATIC_TEST_OTP: ${{ secrets.STATIC_TEST_OTP }}
+          run: |
+            pytest -m "${{ github.event.inputs.test_marker || 'smoke' }} and ${{ matrix.module }}" \
+              --html=reports/report_${{ matrix.module }}.html --self-contained-html \
+              -v
+
+        - name: Record pass/fail
+          id: set-outcome
+          if: always()
+          run: echo "result=${{ steps.pytest.outcome }}" >> "$GITHUB_OUTPUT"
+
+        ######## Always publish the report, pass or fail ########
+        - name: Upload HTML report
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: report-${{ matrix.module }}
+            path: UI_automation/reports/report_${{ matrix.module }}.html
+            retention-days: 14
+
+        - name: Upload failure screenshots
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: screenshots-${{ matrix.module }}
+            path: UI_automation/reports/screenshots/
+            if-no-files-found: ignore
+            retention-days: 14
+
+        - name: Fail the job if tests failed
+          if: steps.pytest.outcome == 'failure'
+          run: exit 1
+
+ Notify:
+  runs-on: ubuntu-latest
+  needs: Run-Tests
+  if: always()
+  steps:
+        - name: Download all reports
+          uses: actions/download-artifact@v4
+          with:
+            pattern: report-*
+            path: reports
+            merge-multiple: true
+
+        - name: Email the report
+          uses: dawidd6/action-send-mail@v3
+          with:
+            server_address: ${{ secrets.MAIL_SERVER }}
+            server_port: ${{ secrets.MAIL_PORT }}
+            username: ${{ secrets.MAIL_USERNAME }}
+            password: ${{ secrets.MAIL_PASSWORD }}
+            subject: "UI Automation (Staging) — ${{ needs.Run-Tests.result }} — ${{ github.run_id }}"
+            to: gauravkumar@porch.com
+            from: UI Automation Bot <${{ secrets.MAIL_USERNAME }}>
+            body: |
+              Nightly UI automation run against staging finished with status: ${{ needs.Run-Tests.result }}
+
+              Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+              HTML reports for each module are attached.
+            attachments: reports/report_underwriter.html,reports/report_self_inspection.html
